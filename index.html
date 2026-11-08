@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#FBF3E6">
+<meta name="color-scheme" content="light dark">
 <title>엄마의 일기장</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%2212%22 fill=%22%23FCE6DC%22/%3E%3Cpath fill=%22%23EE9A7E%22 d=%22M12 19s-6-3.7-7.7-7.4C3.2 9 4.8 6.2 7.6 6.2c1.7 0 2.9 1 4.4 2.6 1.5-1.6 2.7-2.6 4.4-2.6 2.8 0 4.4 2.8 3.3 5.4C18 15.3 12 19 12 19z%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -256,7 +257,7 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
   <section class="page pin" id="pinBox" hidden aria-label="가족 비밀번호">
     <p class="sec-title">엄마의 일기장, 펼쳐 볼까요?</p>
     <p class="pin-hint">내 비밀번호 네 자리를 넣어 주세요</p>
-    <input id="pinInput" type="password" inputmode="numeric" maxlength="8" autocomplete="off" aria-label="비밀번호">
+    <input id="pinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" aria-label="비밀번호">
     <button class="btn" id="pinBtn" type="button">일기장 펼치기</button>
     <div class="toast" id="pinToast" role="status" aria-live="polite"></div>
   </section>
@@ -318,11 +319,11 @@ function startRecording(){
     rec = mime? new MediaRecorder(stream,{mimeType:mime}) : new MediaRecorder(stream);
     rec.ondataavailable=function(e){ if(e.data&&e.data.size) recChunks.push(e.data); };
     rec.onstop=function(){
-      clearInterval(recTimer); stream.getTracks().forEach(function(t){ t.stop(); });
+      clearInterval(recTimer); stream.getTracks().forEach(function(t){ t.stop(); }); releaseWake();
       var type=(rec.mimeType||'audio/webm').split(';')[0];
       setClip(new Blob(recChunks,{type:type}),type,'voice.'+(type.indexOf('mp4')>=0?'m4a':'webm'),(Date.now()-recStart)/1000);
     };
-    rec.start(1000); recStart=Date.now(); $('recTime').textContent='0:00'; showVoice('rec');
+    rec.start(1000); recStart=Date.now(); $('recTime').textContent='0:00'; showVoice('rec'); keepAwake();
     recTimer=setInterval(function(){ var s=(Date.now()-recStart)/1000; $('recTime').textContent=mmss(s); if(s>=MAX_REC_SEC) stopRecording(); },500);
   }).catch(function(err){
     var n=err&&err.name;
@@ -330,6 +331,23 @@ function startRecording(){
          : n==='NotFoundError' ? '이 기기에서 마이크를 찾지 못했어요.' : '녹음을 시작하지 못했어요. 다시 눌러 주세요.');
   });
 }
+/* 폰에서 녹음한 webm은 길이 정보가 없어 재생 막대가 0:00으로 보임 → 끝으로 한 번 넘겨 길이를 알아낸 뒤 처음으로 */
+function fixDuration(a,done){
+  var fin=function(){ if(done){ var d=done; done=null; d(); } };
+  a.addEventListener('loadedmetadata',function(){
+    if(isFinite(a.duration)&&a.duration>0) return fin();
+    var h=function(){ if(isFinite(a.duration)&&a.duration>0){ a.removeEventListener('durationchange',h); a.currentTime=0; fin(); } };
+    a.addEventListener('durationchange',h); a.currentTime=1e7;
+  },{once:true});
+  setTimeout(fin,4000);
+}
+/* 녹음 중에는 화면이 꺼지지 않게. 다른 앱으로 넘어가면 거기까지 녹음된 걸 지켜 둠 */
+var wake=null, recCut=false;
+function keepAwake(){ try{ if(navigator.wakeLock) navigator.wakeLock.request('screen').then(function(w){ wake=w; }).catch(function(){}); }catch(e){} }
+function releaseWake(){ try{ if(wake) wake.release(); }catch(e){} wake=null; }
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden&&rec&&rec.state==='recording'){ recCut=true; stopRecording(); }
+});
 function micMsg(t){ var m=$('micMsg'); m.textContent=t||''; m.hidden=!t; }
 function stopRecording(){ if(rec&&rec.state!=='inactive') rec.stop(); }
 function setClip(blob,mime,name,seconds){
@@ -337,8 +355,10 @@ function setClip(blob,mime,name,seconds){
   if(blob.size>25*1024*1024){ toast('toast','너무 길어요. 10분 안으로 다시 해 주세요.','err'); showVoice('idle'); return; }
   clip={blob:blob,mime:mime||blob.type||'audio/mp4',name:name||'voice.m4a'}; removeAudio=false;
   var a=$('clipAudio'); try{ if(a.src) URL.revokeObjectURL(a.src); }catch(e){}
-  a.src=URL.createObjectURL(blob); a.hidden=false;
-  $('clipTitle').textContent='목소리가 담겼어요'+(seconds?' ('+mmss(seconds)+')':'')+'. 들어 보고 저장해 주세요.';
+  fixDuration(a); a.src=URL.createObjectURL(blob); a.hidden=false;
+  $('clipTitle').textContent= recCut ? '화면을 벗어나서 녹음이 멈췄어요'+(seconds?' ('+mmss(seconds)+'까지 담김)':'')+'. 들어 보고 저장하거나 다시 녹음해 주세요.'
+    : '목소리가 담겼어요'+(seconds?' ('+mmss(seconds)+')':'')+'. 들어 보고 저장해 주세요.';
+  recCut=false;
   showVoice('clip');
 }
 function dropClip(){
@@ -438,7 +458,7 @@ var PLAY_SVG='<span class="pbtn"><svg viewBox="0 0 24 24" aria-hidden="true"><pa
 function playButton(e){
   var b=el('button','play'); b.type='button'; b.innerHTML=PLAY_SVG; b.appendChild(el('span',null,'엄마 목소리로 듣기'));
   b.onclick=function(){
-    var show=function(url){ var a=document.createElement('audio'); a.controls=true; a.src=url; b.replaceWith(a); a.play().catch(function(){}); };
+    var show=function(url){ var a=document.createElement('audio'); a.controls=true; a.preload='metadata'; b.replaceWith(a); fixDuration(a,function(){ a.play().catch(function(){}); }); a.src=url; };
     if(audioCache[e.id]){ show(audioCache[e.id]); return; }
     b.disabled=true; b.lastChild.textContent='불러오는 중…';
     google.script.run.withSuccessHandler(function(r){
