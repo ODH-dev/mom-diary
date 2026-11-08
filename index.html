@@ -181,6 +181,31 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
 .pin-hint{margin:-14px 0 0;color:var(--muted);font-size:.95rem}
 .pin input{font-family:var(--f-hand);font-size:2.4rem;letter-spacing:.5em;text-align:center;padding:8px;border:0;border-bottom:2px dashed var(--line);background:transparent;color:var(--ink);width:100%;font-variant-numeric:tabular-nums}
 .pin input:focus{outline:none;border-bottom-color:var(--peach)}
+
+/* 책 표지: 비밀번호가 맞으면 표지가 넘어가며 펼쳐짐 */
+.book{position:relative;perspective:1800px;margin-right:8px}
+.book-pages{position:absolute;inset:0;border-radius:6px 14px 14px 6px;display:grid;place-items:center;
+  background:var(--page) repeating-linear-gradient(transparent 0 33px,var(--line) 33px 34px);
+  box-shadow:4px 4px 0 -1px var(--page),4px 4px 0 0 var(--line),8px 8px 0 -1px var(--page),8px 8px 0 0 var(--line)}
+.book-pages p{font-family:var(--f-hand);font-weight:700;font-size:1.5rem;color:var(--muted);margin:0;opacity:0;transition:opacity .4s ease .45s}
+.book-cover{background:var(--cover);border-radius:6px 14px 14px 6px;padding-left:clamp(30px,8vw,40px);
+  background-image:linear-gradient(90deg,var(--spine) 0 16px,rgba(0,0,0,.08) 16px 18px,transparent 18px);
+  outline:2px dashed var(--stitch);outline-offset:-10px;
+  transform-origin:left center;transform-style:preserve-3d;transition:transform 1.05s cubic-bezier(.55,.05,.25,1)}
+.book-cover .sec-title{text-wrap:balance}
+.book-cover .pin-hint{color:var(--ink);opacity:.7}
+.book-cover input{border-bottom-color:var(--stitch)}
+.cover-back{position:absolute;inset:0;border-radius:14px 6px 6px 14px;background:var(--cover-in);
+  transform:rotateY(180deg) translateZ(1px);backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.book.opening .book-cover{transform:rotateY(-178deg)}
+.book.opening .book-pages p{opacity:1}
+:root{--cover:#F4CDB9;--spine:#E6AE93;--stitch:rgba(255,255,255,.75);--cover-in:#F7E6D6}
+@media (prefers-color-scheme:dark){:root{--cover:#5C3E31;--spine:#4A3127;--stitch:rgba(255,235,220,.3);--cover-in:#43352B}}
+/* 펼친 뒤 내용이 살짝 떠오름 */
+@media (prefers-reduced-motion:no-preference){
+  .just-opened > section,.just-opened > .news{animation:rise .5s ease both}
+  @keyframes rise{from{opacity:0;transform:translateY(12px)}}
+}
 </style>
 </head>
 <body>
@@ -254,13 +279,18 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
   </section>
 
   <!-- 가족: 비밀번호 -->
-  <section class="page pin" id="pinBox" hidden aria-label="가족 비밀번호">
-    <p class="sec-title">엄마의 일기장, 펼쳐 볼까요?</p>
-    <p class="pin-hint">내 비밀번호 네 자리를 넣어 주세요</p>
-    <input id="pinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" aria-label="비밀번호">
-    <button class="btn" id="pinBtn" type="button">일기장 펼치기</button>
-    <div class="toast" id="pinToast" role="status" aria-live="polite"></div>
-  </section>
+  <!-- 표지(비밀번호)가 맞으면 책 표지가 왼쪽으로 넘어가며 속지가 보임 -->
+  <div class="book" id="pinBox" hidden>
+    <div class="book-pages" aria-hidden="true"><p>엄마의 하루를 펼치는 중이에요…</p></div>
+    <section class="page pin book-cover" aria-label="가족 비밀번호">
+      <p class="sec-title">엄마의 일기장, 펼쳐 볼까요?</p>
+      <p class="pin-hint">내 비밀번호 네 자리를 넣어 주세요</p>
+      <input id="pinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" aria-label="비밀번호">
+      <button class="btn" id="pinBtn" type="button">일기장 펼치기</button>
+      <div class="toast" id="pinToast" role="status" aria-live="polite"></div>
+      <div class="cover-back" aria-hidden="true"></div>
+    </section>
+  </div>
 
   <section id="listSec" hidden aria-label="일기 목록">
     <div class="sec-head"><p class="sec-title" id="listTitle">지난 일기</p><span><button class="link me-link" id="meBtn" type="button" hidden></button> <button class="link" id="refreshBtn" type="button">새로고침</button></span></div>
@@ -601,13 +631,23 @@ function initMom(){
 
 /* ---------- 가족: 비밀번호 ---------- */
 function showPin(msg){ hideAll(); $('subtitle').textContent='엄마와 동탁이, 동학이의 일기장'; $('pinBox').hidden=false; if(msg) toast('pinToast',msg,'err'); $('pinInput').focus(); }
+function openBook(done){
+  var still=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(still){ done(); return; }
+  var book=$('pinBox'); book.classList.add('opening');
+  setTimeout(function(){
+    book.classList.remove('opening'); done();
+    var app=$('app'); app.classList.add('just-opened'); setTimeout(function(){ app.classList.remove('just-opened'); },700);
+  },1150);
+}
 function tryPin(){
   var v=$('pinInput').value.trim(); if(!v) return;
   var btn=$('pinBtn'); btn.disabled=true;
   google.script.run.withSuccessHandler(function(res){
     btn.disabled=false;
     if(!res||!res.ok){ toast('pinToast','비밀번호가 맞지 않아요.','err'); return; }
-    pin=v; store('pin',v); ME=res.who||''; store('who',ME); $('pinInput').value=''; start();
+    pin=v; store('pin',v); ME=res.who||''; store('who',ME); $('pinInput').blur();
+    openBook(function(){ $('pinInput').value=''; start(); });
   }).withFailureHandler(function(){ btn.disabled=false; toast('pinToast','연결이 안 돼요. 다시 눌러 주세요.','err'); }).getAllForFamily(v);
 }
 
