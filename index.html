@@ -193,6 +193,12 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
   outline:2px dashed var(--stitch);outline-offset:-10px;
   transform-origin:left center;transform-style:preserve-3d;transition:transform 1.05s cubic-bezier(.55,.05,.25,1)}
 .book-cover .sec-title{text-wrap:balance}
+.book-cover{min-height:300px}
+.greet{display:none;flex:1;flex-direction:column;justify-content:center;gap:20px}
+.greet .sec-title{font-size:2.4rem}
+/* 이미 로그인된 경우: 닫힌 표지만 잠깐 보여 주고 펼침 */
+.book.auto .greet{display:flex}
+.book.auto .ask-only,.book.auto input,.book.auto .btn,.book.auto .toast{display:none}
 .book-cover .pin-hint{color:var(--ink);opacity:.7}
 .book-cover input{border-bottom-color:var(--stitch)}
 .cover-back{position:absolute;inset:0;border-radius:14px 6px 6px 14px;background:var(--cover-in);
@@ -283,8 +289,9 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
   <div class="book" id="pinBox" hidden>
     <div class="book-pages" aria-hidden="true"><p>엄마의 하루를 펼치는 중이에요…</p></div>
     <section class="page pin book-cover" aria-label="가족 비밀번호">
-      <p class="sec-title">엄마의 일기장, 펼쳐 볼까요?</p>
-      <p class="pin-hint">내 비밀번호 네 자리를 넣어 주세요</p>
+      <p class="sec-title ask-only">엄마의 일기장, 펼쳐 볼까요?</p>
+      <p class="pin-hint ask-only">내 비밀번호 네 자리를 넣어 주세요</p>
+      <div class="greet" aria-hidden="true"><p class="sec-title">엄마의 일기장</p><p class="pin-hint">오늘의 일기장을 펼칠게요</p></div>
       <input id="pinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" aria-label="비밀번호">
       <button class="btn" id="pinBtn" type="button">일기장 펼치기</button>
       <div class="toast" id="pinToast" role="status" aria-live="polite"></div>
@@ -631,6 +638,13 @@ function initMom(){
 
 /* ---------- 가족: 비밀번호 ---------- */
 function showPin(msg){ hideAll(); $('subtitle').textContent='엄마와 동탁이, 동학이의 일기장'; $('pinBox').hidden=false; if(msg) toast('pinToast',msg,'err'); $('pinInput').focus(); }
+function showCover(){
+  var still=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(still){ start(); return; }
+  hideAll(); $('subtitle').textContent='엄마와 동탁이, 동학이의 일기장';
+  var book=$('pinBox'); book.classList.add('auto'); book.hidden=false;
+  setTimeout(function(){ openBook(function(){ book.classList.remove('auto'); start(); }); },700);
+}
 function openBook(done){
   var still=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
   if(still){ done(); return; }
@@ -657,7 +671,7 @@ function tryPin(){
   $('meBtn').onclick=logout;
   $('pinBtn').onclick=tryPin; $('pinInput').onkeydown=function(ev){ if(ev.key==='Enter') tryPin(); };
   var saved=load('pin');
-  if(saved&&ME){ pin=saved; start(); } else logout();
+  if(saved&&ME){ pin=saved; showCover(); } else logout();
 })();
 </script>
 </body>
