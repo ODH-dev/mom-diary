@@ -20,13 +20,14 @@
   --peach-soft:#FCE6DC;
   --butter:#F8E3A3;     /* 마스킹테이프 */
   --leaf:#7FA77A;
+  --leaf-soft:#E6F0E2;
   --danger:#C9624E;
   --f-hand:"Gaegu","Nanum Pen Script","Apple SD Gothic Neo",cursive;
   --f-ui:"Gowun Dodum","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
 }
 @media (prefers-color-scheme:dark){:root{
   --paper:#2A221C; --page:#352B23; --ink:#F2E4D3; --muted:#B9A592; --line:#4A3D32;
-  --peach:#F0A188; --peach-soft:#4A3229; --butter:#6B5A2E; --leaf:#9DC498; --danger:#EE8C78; color-scheme:dark}}
+  --peach:#F0A188; --peach-soft:#4A3229; --butter:#6B5A2E; --leaf:#9DC498; --leaf-soft:#2C3A2A; --danger:#EE8C78; color-scheme:dark}}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0}
@@ -149,6 +150,33 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
 .entry audio{width:100%}
 .emeta{font-size:.82rem;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
 
+/* 아들들의 읽음 · 반응 · 답장 */
+.social{display:flex;flex-direction:column;gap:10px;border-top:1px dashed var(--line);padding-top:12px}
+.reads{display:flex;gap:6px;flex-wrap:wrap}
+.read-chip{font-size:.82rem;padding:2px 10px;border-radius:999px;background:var(--paper);color:var(--muted)}
+.read-chip.on{background:var(--leaf-soft);color:var(--leaf);font-weight:700}
+.reacts{display:flex;gap:6px;flex-wrap:wrap}
+.react-tag{font-size:.9rem;padding:3px 10px;border-radius:999px;background:var(--peach-soft);color:var(--ink)}
+.react-btns{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.react-btn{font-family:var(--f-ui);font-size:.82rem;min-height:56px;padding:4px 2px;border-radius:14px;border:1.5px solid var(--line);background:var(--page);color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2;white-space:nowrap;min-width:0}
+.react-btn b{font-size:1.35rem;font-weight:400}
+.react-btn[aria-pressed="true"]{background:var(--peach-soft);border-color:var(--peach);color:var(--ink);font-weight:700}
+.bubbles{display:flex;flex-direction:column;gap:6px}
+.bubble{align-self:flex-start;max-width:90%;background:var(--paper);border-radius:4px 16px 16px 16px;padding:8px 12px;font-size:1rem;line-height:1.5;overflow-wrap:anywhere}
+.bubble .who{display:block;font-size:.78rem;font-weight:700;color:var(--peach)}
+.bubble .when{font-size:.72rem;color:var(--muted);margin-left:6px;font-weight:400}
+.reply-form{display:flex;gap:8px}
+.reply-form input{flex:1;min-width:0;font:inherit;font-size:1rem;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--page);color:var(--ink);min-height:46px}
+.reply-form button{font-family:var(--f-hand);font-weight:700;font-size:1.2rem;border:0;border-radius:12px;background:var(--ink);color:var(--page);padding:0 16px;cursor:pointer;min-height:46px;white-space:nowrap}
+.reply-form button:disabled{opacity:.55}
+.news{background:var(--peach-soft);border-radius:16px;padding:12px 16px;display:flex;flex-direction:column;gap:2px}
+.news b{font-family:var(--f-hand);font-size:1.35rem;color:var(--ink)}
+.news span{font-size:.95rem;color:var(--ink)}
+.who-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.who-btns button{font-family:var(--f-hand);font-weight:700;font-size:1.6rem;min-height:72px;border-radius:16px;border:1.5px solid var(--line);background:var(--page);color:var(--ink);cursor:pointer}
+.who-btns button:active{background:var(--peach-soft);border-color:var(--peach)}
+.me-link{font-size:.85rem}
+
 /* 가족 비밀번호 */
 .pin{text-align:center;align-items:stretch}
 .pin .sec-title{font-size:1.8rem}
@@ -168,6 +196,8 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
       <p id="subtitle"></p>
     </div>
   </header>
+
+  <div class="news" id="news" hidden role="status"></div>
 
   <!-- 엄마: 쓰기 -->
   <section class="page" id="composer" hidden aria-label="일기 남기기">
@@ -234,8 +264,15 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
     <div class="toast" id="pinToast" role="status" aria-live="polite"></div>
   </section>
 
+  <!-- 가족: 누구세요 -->
+  <section class="page pin" id="whoBox" hidden aria-label="누구세요">
+    <p class="sec-title">누구세요?</p>
+    <p class="pin-hint">한 번만 고르면 이 폰에서 기억해요</p>
+    <div class="who-btns"><button type="button" data-who="동탁">동탁이에요</button><button type="button" data-who="동학">동학이에요</button></div>
+  </section>
+
   <section id="listSec" hidden aria-label="일기 목록">
-    <div class="sec-head"><p class="sec-title" id="listTitle">지난 일기</p><button class="link" id="refreshBtn" type="button">새로고침</button></div>
+    <div class="sec-head"><p class="sec-title" id="listTitle">지난 일기</p><span><button class="link me-link" id="meBtn" type="button" hidden></button> <button class="link" id="refreshBtn" type="button">새로고침</button></span></div>
     <div class="notice" id="feedNotice">엄마의 하루를 펼치는 중이에요…</div>
     <div class="feed" id="feed"></div>
   </section>
@@ -260,6 +297,9 @@ var MOOD = ['좋음','그럭저럭','피곤','속상','감사'];
 var EMOJI = {'맑음':'☀️','구름':'⛅','비':'🌧️','눈':'⛄','바람':'🍃','좋음':'😊','그럭저럭':'🙂','피곤':'😪','속상':'😢','감사':'🥰'};
 var DAYS = ['일','월','화','수','목','금','토'];
 var MAX_REC_SEC = 600;
+var SONS = ['동탁','동학'];
+var REACTS = [['❤️','고마워요'],['😂','웃겨요'],['👍','좋아요'],['🥲','짠해요']];
+var ME = load('who')||'';
 var $ = function(id){ return document.getElementById(id); };
 var sel = { weather:null, mood:null }, editingId = null, confirmId = null, entries = [], pin = '';
 var clip = null, keptAudio = false, removeAudio = false;
@@ -394,11 +434,11 @@ function loadList(){
   $('feedNotice').hidden=false; $('feedNotice').textContent='엄마의 하루를 펼치는 중이에요…';
   var fail=function(){ $('feedNotice').textContent='일기를 불러오지 못했어요. 새로고침을 눌러 주세요.'; };
   if(MODE==='mom'){
-    google.script.run.withSuccessHandler(function(list){ entries=list||[]; render(); }).withFailureHandler(fail).getRecent();
+    google.script.run.withSuccessHandler(function(list){ entries=list||[]; render(); showNews(); }).withFailureHandler(fail).getRecent();
   }else{
     google.script.run.withSuccessHandler(function(res){
       if(!res||!res.ok){ store('pin'); showPin('비밀번호가 바뀌었어요. 다시 넣어 주세요.'); return; }
-      entries=res.entries; render();
+      entries=res.entries; render(); markAllRead();
     }).withFailureHandler(fail).getAllForFamily(pin);
   }
 }
@@ -419,7 +459,7 @@ function playButton(e){
 }
 function render(){
   var feed=$('feed'); feed.innerHTML='';
-  if(!entries.length){ $('feedNotice').hidden=false; $('feedNotice').textContent= MODE==='mom'?'첫 번째 하루를 기다리고 있어요.':'엄마의 첫 이야기를 기다리고 있어요.'; return; }
+  if(!entries.length){ $('feedNotice').hidden=false; $('feedNotice').textContent= MODE==='mom'?'첫 번째 하루를 기다리고 있어요.':'엄마의 첫 편지를 기다리고 있어요.'; return; }
   $('feedNotice').hidden=true;
   var lastMonth='';
   entries.forEach(function(e){
@@ -433,6 +473,7 @@ function render(){
     card.appendChild(head);
     if(e.hasAudio) card.appendChild(playButton(e));
     if(e.text) card.appendChild(el('div','ebody',e.text));
+    card.appendChild(socialBlock(e));
     var meta=el('div','emeta'); meta.appendChild(el('span',null, e.editedAt?'고침 '+e.editedAt.slice(5):'남긴 시각 '+e.createdAt.slice(5)));
     if(MODE==='mom'){
       var ed=el('button','link','고치기'); ed.type='button'; ed.onclick=function(){ startEdit(e); }; meta.appendChild(ed);
@@ -449,6 +490,80 @@ function render(){
   });
 }
 
+/* ---------- 아들들의 읽음 · 반응 · 답장 ---------- */
+function socialBlock(e){
+  e.reads=e.reads||{}; e.reacts=e.reacts||{}; e.replies=e.replies||[];
+  var box=el('div','social');
+  var reads=el('div','reads');
+  SONS.forEach(function(n){ var on=!!e.reads[n]; reads.appendChild(el('span','read-chip'+(on?' on':''), n+(on?' 읽었어요 ✓':' 아직 안 읽었어요'))); });
+  box.appendChild(reads);
+  if(MODE==='family'){
+    var mine=(e.reacts[ME]||{}).emoji||'';
+    var btns=el('div','react-btns');
+    REACTS.forEach(function(r){
+      var b=el('button','react-btn'); b.type='button'; b.setAttribute('aria-pressed',String(mine===r[0]));
+      b.appendChild(el('b',null,r[0])); b.appendChild(document.createTextNode(r[1]));
+      b.onclick=function(){ sendReact(e,r[0]); }; btns.appendChild(b);
+    });
+    box.appendChild(btns);
+  }
+  var tags=el('div','reacts');
+  SONS.forEach(function(n){ if(MODE==='family'&&n===ME) return; var r=e.reacts[n]; if(r&&r.emoji) tags.appendChild(el('span','react-tag',r.emoji+' '+n)); });
+  if(tags.childNodes.length) box.appendChild(tags);
+  if(e.replies.length){
+    var bs=el('div','bubbles');
+    e.replies.forEach(function(r){ var b=el('div','bubble'); var w=el('span','who',r.who); w.appendChild(el('span','when',(r.time||'').slice(5))); b.appendChild(w); b.appendChild(document.createTextNode(r.text)); bs.appendChild(b); });
+    box.appendChild(bs);
+  }
+  if(MODE==='family'){
+    var f=el('form','reply-form'); var inp=document.createElement('input'); inp.id='reply-'+e.id; inp.maxLength=300; inp.placeholder='엄마에게 한마디 (짧아도 돼요)'; inp.setAttribute('aria-label','엄마에게 한마디');
+    var sb=el('button',null,'보내기'); sb.type='submit';
+    f.onsubmit=function(ev){ ev.preventDefault(); sendReply(e,inp,sb); };
+    f.appendChild(inp); f.appendChild(sb); box.appendChild(f);
+  }
+  return box;
+}
+function sendReact(e,emoji){
+  var prev=e.reacts[ME]; var off=prev&&prev.emoji===emoji;
+  if(off) delete e.reacts[ME]; else e.reacts[ME]={emoji:emoji,time:''};
+  render();
+  google.script.run.withSuccessHandler(function(){}).withFailureHandler(function(){
+    if(prev) e.reacts[ME]=prev; else delete e.reacts[ME]; render(); alertBox('반응을 보내지 못했어요. 다시 눌러 주세요.');
+  }).react(pin,ME,e.id,emoji);
+}
+function sendReply(e,inp,btn){
+  var t=inp.value.trim(); if(!t) return;
+  btn.disabled=true; btn.textContent='보내는 중';
+  google.script.run.withSuccessHandler(function(r){ e.replies.push(r); render(); })
+    .withFailureHandler(function(){ btn.disabled=false; btn.textContent='보내기'; alertBox('답장을 보내지 못했어요. 다시 눌러 주세요.'); })
+    .reply(pin,ME,e.id,t);
+}
+function alertBox(msg){ var n=$('news'); n.innerHTML=''; n.appendChild(el('span',null,msg)); n.hidden=false; }
+function markAllRead(){
+  if(!ME) return;
+  var ids=entries.filter(function(e){ return !(e.reads&&e.reads[ME]); }).map(function(e){ return e.id; });
+  if(!ids.length) return;
+  google.script.run.withSuccessHandler(function(){ entries.forEach(function(e){ if(ids.indexOf(e.id)>=0){ e.reads=e.reads||{}; e.reads[ME]='now'; } }); render(); }).withFailureHandler(function(){}).markRead(pin,ME,ids);
+}
+function showNews(){
+  var seen=load('seen')||'', ev=[];
+  entries.forEach(function(e){
+    (e.replies||[]).forEach(function(r){ ev.push({t:r.time,s:r.who+'이가 답장을 남겼어요 💌 “'+(r.text.length>24?r.text.slice(0,24)+'…':r.text)+'”'}); });
+    Object.keys(e.reacts||{}).forEach(function(n){ var r=e.reacts[n]; ev.push({t:r.time,s:n+'이가 '+r.emoji+' 를 보냈어요'}); });
+    Object.keys(e.reads||{}).forEach(function(n){ ev.push({t:e.reads[n],s:n+'이가 일기를 읽었어요',low:1}); });
+  });
+  var fresh=ev.filter(function(x){ return x.t&&x.t>seen; }).sort(function(a,b){ return (a.low||0)-(b.low||0)||(a.t<b.t?1:-1); });
+  var n=$('news'); n.innerHTML='';
+  if(!fresh.length){ n.hidden=true; return; }
+  n.appendChild(el('b',null,'아들들이 엄마 일기를 봤어요'));
+  fresh.slice(0,3).forEach(function(x){ n.appendChild(el('span',null,x.s)); });
+  n.hidden=false;
+  store('seen', ev.reduce(function(m,x){ return x.t>m?x.t:m; },seen));
+}
+function showWho(){ $('pinBox').hidden=true; $('listSec').hidden=true; $('whoBox').hidden=false; }
+function setMe(n){ ME=n; store('who',n); $('whoBox').hidden=true; $('listSec').hidden=false;
+  $('subtitle').textContent=n+'이에게, 엄마가 보낸 편지'; $('meBtn').textContent='나는 '+n; $('meBtn').hidden=false; loadList(); }
+
 /* ---------- 가족: 비밀번호 ---------- */
 function showPin(msg){ $('pinBox').hidden=false; $('listSec').hidden=true; if(msg) toast('pinToast',msg,'err'); $('pinInput').focus(); }
 function tryPin(){
@@ -457,7 +572,7 @@ function tryPin(){
   google.script.run.withSuccessHandler(function(res){
     btn.disabled=false;
     if(!res||!res.ok){ toast('pinToast','비밀번호가 맞지 않아요.','err'); return; }
-    pin=v; store('pin',v); $('pinBox').hidden=true; $('listSec').hidden=false; entries=res.entries; render();
+    pin=v; store('pin',v); if(!ME){ showWho(); return; } $('pinBox').hidden=true; setMe(ME);
   }).withFailureHandler(function(){ btn.disabled=false; toast('pinToast','연결이 안 돼요. 다시 눌러 주세요.','err'); }).getAllForFamily(v);
 }
 
@@ -480,10 +595,12 @@ function tryPin(){
     $('saveBtn').onclick=save; $('cancelBtn').onclick=function(){ resetComposer(); loadDraft(); refreshChips(); };
     loadList();
   }else{
-    $('subtitle').textContent='동탁 · 동학에게, 엄마가'; $('listTitle').textContent='엄마의 하루는 어땠을까요';
+    $('subtitle').textContent='동탁 · 동학에게, 엄마가'; $('listTitle').textContent='엄마가 보낸 편지';
+    document.querySelectorAll('[data-who]').forEach(function(b){ b.onclick=function(){ setMe(b.getAttribute('data-who')); }; });
+    $('meBtn').onclick=function(){ store('who'); ME=''; showWho(); };
     $('pinBtn').onclick=tryPin; $('pinInput').onkeydown=function(ev){ if(ev.key==='Enter') tryPin(); };
     var saved=load('pin');
-    if(saved){ pin=saved; $('listSec').hidden=false; loadList(); } else showPin();
+    if(saved){ pin=saved; if(ME) setMe(ME); else showWho(); } else showPin();
   }
 })();
 </script>
