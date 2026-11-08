@@ -173,7 +173,8 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
 .news b{font-family:var(--f-hand);font-size:1.35rem;color:var(--ink)}
 .news span{font-size:.95rem;color:var(--ink)}
 .who-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.who-btns button{font-family:var(--f-hand);font-weight:700;font-size:1.6rem;min-height:72px;border-radius:16px;border:1.5px solid var(--line);background:var(--page);color:var(--ink);cursor:pointer}
+.who-btns button{font-family:var(--f-hand);font-weight:700;font-size:clamp(1.3rem,6vw,1.6rem);white-space:nowrap;min-width:0;min-height:72px;border-radius:16px;border:1.5px solid var(--line);background:var(--page);color:var(--ink);cursor:pointer}
+.who-btns .who-mom{grid-column:1/-1;background:var(--peach-soft);border-color:var(--peach)}
 .who-btns button:active{background:var(--peach-soft);border-color:var(--peach)}
 .me-link{font-size:.85rem}
 
@@ -257,10 +258,10 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
 
   <!-- 가족: 비밀번호 -->
   <section class="page pin" id="pinBox" hidden aria-label="가족 비밀번호">
-    <p class="sec-title">엄마의 하루, 펼쳐 볼까요?</p>
-    <p class="pin-hint">가족 비밀번호를 넣어 주세요</p>
+    <p class="sec-title">엄마의 일기장, 펼쳐 볼까요?</p>
+    <p class="pin-hint">가족 비밀번호 네 자리를 넣어 주세요</p>
     <input id="pinInput" type="password" inputmode="numeric" maxlength="8" autocomplete="off" aria-label="비밀번호">
-    <button class="btn" id="pinBtn" type="button">엄마 일기 펼치기</button>
+    <button class="btn" id="pinBtn" type="button">일기장 펼치기</button>
     <div class="toast" id="pinToast" role="status" aria-live="polite"></div>
   </section>
 
@@ -268,7 +269,7 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
   <section class="page pin" id="whoBox" hidden aria-label="누구세요">
     <p class="sec-title">누구세요?</p>
     <p class="pin-hint">한 번만 고르면 이 폰에서 기억해요</p>
-    <div class="who-btns"><button type="button" data-who="동탁">동탁이에요</button><button type="button" data-who="동학">동학이에요</button></div>
+    <div class="who-btns"><button type="button" class="who-mom" data-who="엄마">엄마예요</button><button type="button" data-who="동탁">동탁이에요</button><button type="button" data-who="동학">동학이에요</button></div>
   </section>
 
   <section id="listSec" hidden aria-label="일기 목록">
@@ -279,12 +280,10 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
 </div>
 
 <script>
-var MODE = /[?&]v=family\b/.test(location.search) ? 'family' : 'mom';
+var MODE = 'family';  /* 누구세요?에서 엄마를 고르면 'mom' */
 /* 저장은 구글 시트·드라이브(Apps Script)로 보냄 */
 var API = 'https://script.google.com/macros/s/AKfycbwBN4vqze8nUU_T6rZX3fFUSTNwmNDfPSskkxuZPFpuGvWBOLtKqnDSv_jU2YW7ZN2YMw/exec';
-var KEY=(location.search.match(/[?&]k=([A-Za-z0-9]+)/)||[])[1]||'';
-try{ if(KEY) localStorage.setItem('k',KEY); else KEY=localStorage.getItem('k')||''; }catch(e){}
-function callApi(fn,args){ return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({fn:fn,args:args,key:KEY})})
+function callApi(fn,args){ return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({fn:fn,args:args,key:pin})})
   .then(function(r){ return r.json(); }).then(function(j){ if(!j.ok) throw new Error(j.error||'error'); return j.result; }); }
 var google={script:{}}; Object.defineProperty(google.script,'run',{get:function(){
   var ok=function(){}, fail=function(){}; var p=new Proxy({},{get:function(_,name){
@@ -432,7 +431,9 @@ function removeEntry(id){
 /* ---------- 목록 ---------- */
 function loadList(){
   $('feedNotice').hidden=false; $('feedNotice').textContent='엄마의 하루를 펼치는 중이에요…';
-  var fail=function(){ $('feedNotice').textContent='일기를 불러오지 못했어요. 새로고침을 눌러 주세요.'; };
+  var fail=function(err){
+    if(String(err&&err.message).indexOf('권한')>=0){ store('pin'); pin=''; showPin('비밀번호가 바뀌었어요. 다시 넣어 주세요.'); return; }
+    $('feedNotice').textContent='일기를 불러오지 못했어요. 새로고침을 눌러 주세요.'; };
   if(MODE==='mom'){
     google.script.run.withSuccessHandler(function(list){ entries=list||[]; render(); showNews(); }).withFailureHandler(fail).getRecent();
   }else{
@@ -453,7 +454,7 @@ function playButton(e){
     google.script.run.withSuccessHandler(function(r){
       var bin=atob(r.data), arr=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
       var url=URL.createObjectURL(new Blob([arr],{type:r.mime||'audio/mp4'})); audioCache[e.id]=url; show(url);
-    }).withFailureHandler(function(){ b.disabled=false; b.lastChild.textContent='다시 눌러 주세요'; }).getAudio(e.id, MODE==='family'?pin:'');
+    }).withFailureHandler(function(){ b.disabled=false; b.lastChild.textContent='다시 눌러 주세요'; }).getAudio(e.id, pin);
   };
   return b;
 }
@@ -560,48 +561,55 @@ function showNews(){
   n.hidden=false;
   store('seen', ev.reduce(function(m,x){ return x.t>m?x.t:m; },seen));
 }
-function showWho(){ $('pinBox').hidden=true; $('listSec').hidden=true; $('whoBox').hidden=false; }
-function setMe(n){ ME=n; store('who',n); $('whoBox').hidden=true; $('listSec').hidden=false;
-  $('subtitle').textContent=n+'이에게, 엄마가 보낸 편지'; $('meBtn').textContent='나는 '+n; $('meBtn').hidden=false; loadList(); }
+function hideAll(){ ['pinBox','whoBox','composer','listSec','news'].forEach(function(id){ $(id).hidden=true; }); }
+function showWho(){ hideAll(); $('subtitle').textContent='누가 왔는지 알려 주세요'; $('whoBox').hidden=false; }
+function setMe(n){ ME=n; store('who',n); start(); }
+function start(){
+  hideAll(); MODE= ME==='엄마'?'mom':'family'; confirmId=null;
+  $('listSec').hidden=false; $('meBtn').textContent='나는 '+ME; $('meBtn').hidden=false;
+  if(MODE==='mom'){
+    $('subtitle').textContent='동탁이, 동학이에게 남기는 엄마의 하루'; $('listTitle').textContent='엄마가 남긴 하루들';
+    $('composer').hidden=false; initMom();
+  }else{
+    $('subtitle').textContent=ME+'이에게, 엄마가 보낸 편지'; $('listTitle').textContent='엄마가 보낸 편지';
+  }
+  loadList();
+}
+var momReady=false;
+function initMom(){
+  if(momReady) return; momReady=true;
+  $('dateInput').value=todayStr(); loadDraft(); refreshChips(); setDateLabel(); showVoice('idle');
+  $('dateInput').onchange=setDateLabel; $('bodyInput').oninput=saveDraft;
+  $('tabVoice').onclick=function(){ setMode('voice'); }; $('tabText').onclick=function(){ setMode('text'); };
+  var d0=null; try{ d0=JSON.parse(load('draft')||'null'); }catch(e){}
+  setMode(d0&&d0.t ? 'text' : (load('mode')||'voice'));
+  $('micBtn').onclick=startRecording; $('stopBtn').onclick=stopRecording;
+  $('reRecBtn').onclick=function(){ dropClip(); startRecording(); };
+  $('dropClipBtn').onclick=dropClip;
+  $('audioFile').onchange=function(){ var f=this.files&&this.files[0]; if(f) setClip(f,f.type,f.name,0); this.value=''; };
+  $('saveBtn').onclick=save; $('cancelBtn').onclick=function(){ resetComposer(); loadDraft(); refreshChips(); };
+}
 
 /* ---------- 가족: 비밀번호 ---------- */
-function showPin(msg){ $('pinBox').hidden=false; $('listSec').hidden=true; if(msg) toast('pinToast',msg,'err'); $('pinInput').focus(); }
+function showPin(msg){ hideAll(); $('subtitle').textContent='엄마와 동탁이, 동학이의 일기장'; $('pinBox').hidden=false; if(msg) toast('pinToast',msg,'err'); $('pinInput').focus(); }
 function tryPin(){
   var v=$('pinInput').value.trim(); if(!v) return;
   var btn=$('pinBtn'); btn.disabled=true;
   google.script.run.withSuccessHandler(function(res){
     btn.disabled=false;
     if(!res||!res.ok){ toast('pinToast','비밀번호가 맞지 않아요.','err'); return; }
-    pin=v; store('pin',v); if(!ME){ showWho(); return; } $('pinBox').hidden=true; setMe(ME);
+    pin=v; store('pin',v); $('pinInput').value=''; if(ME) start(); else showWho();
   }).withFailureHandler(function(){ btn.disabled=false; toast('pinToast','연결이 안 돼요. 다시 눌러 주세요.','err'); }).getAllForFamily(v);
 }
 
-/* ---------- 시작 ---------- */
+/* ---------- 시작: 모두 같은 링크 → 비밀번호 → 누구세요? ---------- */
 (function(){
   $('refreshBtn').onclick=loadList;
-  if(MODE==='mom' && !KEY){ $('subtitle').textContent='엄마 전용 링크로 열어 주세요'; return; }
-  if(MODE==='mom'){
-    $('subtitle').textContent='동탁이, 동학이에게 남기는 엄마의 하루';
-    $('composer').hidden=false; $('listSec').hidden=false; $('listTitle').textContent='엄마가 남긴 하루들';
-    $('dateInput').value=todayStr(); loadDraft(); refreshChips(); setDateLabel(); showVoice('idle');
-    $('dateInput').onchange=setDateLabel; $('bodyInput').oninput=saveDraft;
-    $('tabVoice').onclick=function(){ setMode('voice'); }; $('tabText').onclick=function(){ setMode('text'); };
-    var d0=null; try{ d0=JSON.parse(load('draft')||'null'); }catch(e){}
-    setMode(d0&&d0.t ? 'text' : (load('mode')||'voice'));
-    $('micBtn').onclick=startRecording; $('stopBtn').onclick=stopRecording;
-    $('reRecBtn').onclick=function(){ dropClip(); startRecording(); };
-    $('dropClipBtn').onclick=dropClip;
-    $('audioFile').onchange=function(){ var f=this.files&&this.files[0]; if(f) setClip(f,f.type,f.name,0); this.value=''; };
-    $('saveBtn').onclick=save; $('cancelBtn').onclick=function(){ resetComposer(); loadDraft(); refreshChips(); };
-    loadList();
-  }else{
-    $('subtitle').textContent='동탁 · 동학에게, 엄마가'; $('listTitle').textContent='엄마가 보낸 편지';
-    document.querySelectorAll('[data-who]').forEach(function(b){ b.onclick=function(){ setMe(b.getAttribute('data-who')); }; });
-    $('meBtn').onclick=function(){ store('who'); ME=''; showWho(); };
-    $('pinBtn').onclick=tryPin; $('pinInput').onkeydown=function(ev){ if(ev.key==='Enter') tryPin(); };
-    var saved=load('pin');
-    if(saved){ pin=saved; if(ME) setMe(ME); else showWho(); } else showPin();
-  }
+  document.querySelectorAll('[data-who]').forEach(function(b){ b.onclick=function(){ setMe(b.getAttribute('data-who')); }; });
+  $('meBtn').onclick=function(){ store('who'); ME=''; showWho(); };
+  $('pinBtn').onclick=tryPin; $('pinInput').onkeydown=function(ev){ if(ev.key==='Enter') tryPin(); };
+  var saved=load('pin');
+  if(saved){ pin=saved; if(ME) start(); else showWho(); } else showPin();
 })();
 </script>
 </body>
