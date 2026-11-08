@@ -172,10 +172,6 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
 .news{background:var(--peach-soft);border-radius:16px;padding:12px 16px;display:flex;flex-direction:column;gap:2px}
 .news b{font-family:var(--f-hand);font-size:1.35rem;color:var(--ink)}
 .news span{font-size:.95rem;color:var(--ink)}
-.who-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.who-btns button{font-family:var(--f-hand);font-weight:700;font-size:clamp(1.3rem,6vw,1.6rem);white-space:nowrap;min-width:0;min-height:72px;border-radius:16px;border:1.5px solid var(--line);background:var(--page);color:var(--ink);cursor:pointer}
-.who-btns .who-mom{grid-column:1/-1;background:var(--peach-soft);border-color:var(--peach)}
-.who-btns button:active{background:var(--peach-soft);border-color:var(--peach)}
 .me-link{font-size:.85rem}
 
 /* 가족 비밀번호 */
@@ -259,17 +255,10 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
   <!-- 가족: 비밀번호 -->
   <section class="page pin" id="pinBox" hidden aria-label="가족 비밀번호">
     <p class="sec-title">엄마의 일기장, 펼쳐 볼까요?</p>
-    <p class="pin-hint">가족 비밀번호 네 자리를 넣어 주세요</p>
+    <p class="pin-hint">내 비밀번호 네 자리를 넣어 주세요</p>
     <input id="pinInput" type="password" inputmode="numeric" maxlength="8" autocomplete="off" aria-label="비밀번호">
     <button class="btn" id="pinBtn" type="button">일기장 펼치기</button>
     <div class="toast" id="pinToast" role="status" aria-live="polite"></div>
-  </section>
-
-  <!-- 가족: 누구세요 -->
-  <section class="page pin" id="whoBox" hidden aria-label="누구세요">
-    <p class="sec-title">누구세요?</p>
-    <p class="pin-hint">한 번만 고르면 이 폰에서 기억해요</p>
-    <div class="who-btns"><button type="button" class="who-mom" data-who="엄마">엄마예요</button><button type="button" data-who="동탁">동탁이에요</button><button type="button" data-who="동학">동학이에요</button></div>
   </section>
 
   <section id="listSec" hidden aria-label="일기 목록">
@@ -432,13 +421,14 @@ function removeEntry(id){
 function loadList(){
   $('feedNotice').hidden=false; $('feedNotice').textContent='엄마의 하루를 펼치는 중이에요…';
   var fail=function(err){
-    if(String(err&&err.message).indexOf('권한')>=0){ store('pin'); pin=''; showPin('비밀번호가 바뀌었어요. 다시 넣어 주세요.'); return; }
+    if(String(err&&err.message).indexOf('권한')>=0){ logout(); toast('pinToast','비밀번호가 바뀌었어요. 다시 넣어 주세요.','err'); return; }
     $('feedNotice').textContent='일기를 불러오지 못했어요. 새로고침을 눌러 주세요.'; };
   if(MODE==='mom'){
     google.script.run.withSuccessHandler(function(list){ entries=list||[]; render(); showNews(); }).withFailureHandler(fail).getRecent();
   }else{
     google.script.run.withSuccessHandler(function(res){
-      if(!res||!res.ok){ store('pin'); showPin('비밀번호가 바뀌었어요. 다시 넣어 주세요.'); return; }
+      if(!res||!res.ok){ logout(); toast('pinToast','비밀번호가 바뀌었어요. 다시 넣어 주세요.','err'); return; }
+      if(res.who&&res.who!==ME){ ME=res.who; store('who',ME); if(ME==='엄마'){ start(); return; } }
       entries=res.entries; render(); markAllRead();
     }).withFailureHandler(fail).getAllForFamily(pin);
   }
@@ -561,12 +551,11 @@ function showNews(){
   n.hidden=false;
   store('seen', ev.reduce(function(m,x){ return x.t>m?x.t:m; },seen));
 }
-function hideAll(){ ['pinBox','whoBox','composer','listSec','news'].forEach(function(id){ $(id).hidden=true; }); }
-function showWho(){ hideAll(); $('subtitle').textContent='누가 왔는지 알려 주세요'; $('whoBox').hidden=false; }
-function setMe(n){ ME=n; store('who',n); start(); }
+function hideAll(){ ['pinBox','composer','listSec','news'].forEach(function(id){ $(id).hidden=true; }); }
+function logout(){ store('pin'); store('who'); pin=''; ME=''; showPin(); }
 function start(){
   hideAll(); MODE= ME==='엄마'?'mom':'family'; confirmId=null;
-  $('listSec').hidden=false; $('meBtn').textContent='나는 '+ME; $('meBtn').hidden=false;
+  $('listSec').hidden=false; $('meBtn').textContent='나는 '+ME+' · 바꾸기'; $('meBtn').hidden=false;
   if(MODE==='mom'){
     $('subtitle').textContent='동탁이, 동학이에게 남기는 엄마의 하루'; $('listTitle').textContent='엄마가 남긴 하루들';
     $('composer').hidden=false; initMom();
@@ -598,18 +587,17 @@ function tryPin(){
   google.script.run.withSuccessHandler(function(res){
     btn.disabled=false;
     if(!res||!res.ok){ toast('pinToast','비밀번호가 맞지 않아요.','err'); return; }
-    pin=v; store('pin',v); $('pinInput').value=''; if(ME) start(); else showWho();
+    pin=v; store('pin',v); ME=res.who||''; store('who',ME); $('pinInput').value=''; start();
   }).withFailureHandler(function(){ btn.disabled=false; toast('pinToast','연결이 안 돼요. 다시 눌러 주세요.','err'); }).getAllForFamily(v);
 }
 
-/* ---------- 시작: 모두 같은 링크 → 비밀번호 → 누구세요? ---------- */
+/* ---------- 시작: 모두 같은 링크 → 각자 비밀번호 (비밀번호로 누구인지 알아봄) ---------- */
 (function(){
   $('refreshBtn').onclick=loadList;
-  document.querySelectorAll('[data-who]').forEach(function(b){ b.onclick=function(){ setMe(b.getAttribute('data-who')); }; });
-  $('meBtn').onclick=function(){ store('who'); ME=''; showWho(); };
+  $('meBtn').onclick=logout;
   $('pinBtn').onclick=tryPin; $('pinInput').onkeydown=function(ev){ if(ev.key==='Enter') tryPin(); };
   var saved=load('pin');
-  if(saved){ pin=saved; if(ME) start(); else showWho(); } else showPin();
+  if(saved&&ME){ pin=saved; start(); } else logout();
 })();
 </script>
 </body>
