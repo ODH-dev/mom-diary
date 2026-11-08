@@ -66,6 +66,7 @@ header p{margin:0;color:var(--muted);font-size:.95rem}
 .mic-big:active{transform:scale(.97)}
 #micArea{display:flex;flex-direction:column;align-items:center;width:100%}
 .voice-hint{margin:14px 0 0;color:var(--muted);font-size:.95rem;text-wrap:balance}
+.mic-msg{margin:10px 0 0;padding:10px 14px;border-radius:12px;background:var(--peach-soft);color:var(--danger);font-size:.95rem;text-wrap:balance}
 .rec-panel{display:flex;flex-direction:column;align-items:center;gap:14px}
 .rec-ring{width:150px;height:150px;border-radius:50%;background:var(--peach-soft);display:grid;place-items:center;position:relative}
 .rec-ring::after{content:"";position:absolute;inset:0;border-radius:50%;border:3px solid var(--peach);opacity:.6}
@@ -184,6 +185,7 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
           <span>말로 남기기</span>
         </button>
         <p class="voice-hint">엄마 목소리 그대로 동탁이, 동학이에게 전해져요</p>
+        <p class="mic-msg" id="micMsg" role="status" hidden></p>
       </div>
       <div class="rec-panel" id="recPanel" hidden>
         <div class="rec-ring"><div><div class="rec-time" id="recTime">0:00</div><div class="rec-label">듣고 있어요</div></div></div>
@@ -266,7 +268,7 @@ function showVoice(state){ $('micArea').hidden=state!=='idle'; $('recPanel').hid
 function startRecording(){
   if(!canRecordHere()){ $('audioFile').click(); return; }
   navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
-    recChunks=[];
+    micMsg(''); recChunks=[];
     var types=['audio/webm;codecs=opus','audio/mp4','audio/webm'], mime='';
     for(var i=0;i<types.length;i++){ if(MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(types[i])){ mime=types[i]; break; } }
     rec = mime? new MediaRecorder(stream,{mimeType:mime}) : new MediaRecorder(stream);
@@ -278,8 +280,13 @@ function startRecording(){
     };
     rec.start(1000); recStart=Date.now(); $('recTime').textContent='0:00'; showVoice('rec');
     recTimer=setInterval(function(){ var s=(Date.now()-recStart)/1000; $('recTime').textContent=mmss(s); if(s>=MAX_REC_SEC) stopRecording(); },500);
-  }).catch(function(){ $('audioFile').click(); });
+  }).catch(function(err){
+    var n=err&&err.name;
+    micMsg(n==='NotAllowedError'||n==='SecurityError' ? '마이크 사용이 막혀 있어요. 주소창 왼쪽 자물쇠(또는 ⓘ)를 눌러 마이크를 허용한 뒤 다시 눌러 주세요.'
+         : n==='NotFoundError' ? '이 기기에서 마이크를 찾지 못했어요.' : '녹음을 시작하지 못했어요. 다시 눌러 주세요.');
+  });
 }
+function micMsg(t){ var m=$('micMsg'); m.textContent=t||''; m.hidden=!t; }
 function stopRecording(){ if(rec&&rec.state!=='inactive') rec.stop(); }
 function setClip(blob,mime,name,seconds){
   if(!blob||!blob.size){ toast('toast','소리가 담기지 않았어요. 다시 눌러 주세요.','err'); showVoice('idle'); return; }
