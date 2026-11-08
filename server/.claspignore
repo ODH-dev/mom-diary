@@ -1,0 +1,5 @@
+# clasp push 때 Apps Script로 올라갈 파일만 허용
+**/**
+!appsscript.json
+!*.js
+!*.html

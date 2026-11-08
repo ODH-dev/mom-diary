@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# clasp 로그인 정보 (보통 ~/.clasprc.json 에 있지만 혹시 몰라서)
+.clasprc.json
+
+# Node
+node_modules/
+
+# 비밀값을 따로 적어 둔 파일은 절대 올리지 않기
+.env
+*.secret
+secrets*.json

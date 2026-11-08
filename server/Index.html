@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gowun+Dodum&display=swap">
+<style>
+/* 레이아웃: 크림색 종이 위에 마스킹테이프로 붙인 일기장 한 장. 날짜는 손글씨 큰 숫자, 날씨·기분은 스티커 */
+:root{
+  --paper:#FBF3E6;      /* 바탕 종이 */
+  --page:#FFFDF8;       /* 일기장 한 장 */
+  --ink:#5B4534;        /* 갈색 연필 */
+  --muted:#A08B78;
+  --line:#EFE2CF;       /* 공책 줄 */
+  --peach:#EE9A7E;      /* 말로 남기기 */
+  --peach-soft:#FCE6DC;
+  --butter:#F8E3A3;     /* 마스킹테이프 */
+  --leaf:#7FA77A;
+  --danger:#C9624E;
+  --f-hand:"Gaegu","Nanum Pen Script","Apple SD Gothic Neo",cursive;
+  --f-ui:"Gowun Dodum","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --paper:#2A221C; --page:#352B23; --ink:#F2E4D3; --muted:#B9A592; --line:#4A3D32;
+  --peach:#F0A188; --peach-soft:#4A3229; --butter:#6B5A2E; --leaf:#9DC498; --danger:#EE8C78; color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-ui);font-size:18px;line-height:1.6;-webkit-text-size-adjust:100%;word-break:keep-all;overflow-wrap:anywhere;
+  background-image:radial-gradient(var(--line) 1px,transparent 1.2px);background-size:22px 22px}
+.wrap{max-width:560px;margin:0 auto;padding-block:22px 64px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:26px}
+
+/* 표지 */
+header{display:flex;align-items:center;gap:12px}
+.cover-icon{flex:none;width:54px;height:54px;border-radius:50%;background:var(--peach-soft);display:grid;place-items:center}
+.cover-icon svg{width:30px;height:30px;color:var(--peach)}
+header h1{font-family:var(--f-hand);font-weight:700;font-size:2.3rem;line-height:1.1;margin:0}
+header p{margin:0;color:var(--muted);font-size:.95rem}
+
+/* 일기장 한 장 */
+.page{position:relative;background:var(--page);border-radius:6px 6px 18px 18px;padding:30px clamp(14px,4vw,20px) 22px;
+  box-shadow:0 1px 0 var(--line),0 10px 24px -14px rgba(91,69,52,.35);display:flex;flex-direction:column;gap:20px}
+.page::before{content:"";position:absolute;top:-11px;left:50%;width:120px;height:24px;margin-left:-60px;background:var(--butter);
+  opacity:.85;transform:rotate(-2deg);border-radius:2px}
+
+.dateline{display:flex;align-items:flex-end;gap:12px}
+.day-num{font-family:var(--f-hand);font-weight:700;font-size:4rem;line-height:.8;color:var(--peach)}
+.day-meta{display:flex;flex-direction:column;line-height:1.25;padding-bottom:2px}
+.day-meta b{font-family:var(--f-hand);font-size:1.5rem}
+.day-meta span{color:var(--muted);font-size:.95rem}
+.date-change{margin-left:auto;position:relative;font-size:.9rem;color:var(--muted);border:1px dashed var(--line);border-radius:999px;padding:4px 12px;cursor:pointer}
+.date-change input{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}
+
+/* 말로 남기기 */
+.voice{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;padding-top:4px}
+.mic-big{position:relative;width:150px;height:150px;border-radius:50%;border:0;background:var(--peach);color:#fff;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-family:var(--f-hand);font-weight:700;font-size:1.45rem;
+  box-shadow:0 0 0 12px var(--peach-soft),0 12px 22px -10px rgba(238,154,126,.8)}
+.mic-big svg{width:50px;height:50px}
+.mic-big:active{transform:scale(.97)}
+#micArea{display:flex;flex-direction:column;align-items:center;width:100%}
+.voice-hint{margin:14px 0 0;color:var(--muted);font-size:.95rem;text-wrap:balance}
+.rec-panel{display:flex;flex-direction:column;align-items:center;gap:14px}
+.rec-ring{width:150px;height:150px;border-radius:50%;background:var(--peach-soft);display:grid;place-items:center;position:relative}
+.rec-ring::after{content:"";position:absolute;inset:0;border-radius:50%;border:3px solid var(--peach);opacity:.6}
+@media (prefers-reduced-motion:no-preference){.rec-ring::after{animation:breathe 1.6s ease-in-out infinite}@keyframes breathe{50%{transform:scale(1.12);opacity:.15}}}
+.rec-time{font-family:var(--f-hand);font-weight:700;font-size:2.6rem;color:var(--peach);font-variant-numeric:tabular-nums}
+.rec-label{color:var(--muted);font-size:1rem;margin-top:-6px}
+.stop{font-family:var(--f-hand);font-weight:700;font-size:1.5rem;min-height:60px;padding:6px 34px;border-radius:999px;border:2px solid var(--peach);background:var(--page);color:var(--peach);cursor:pointer;display:flex;align-items:center;gap:10px}
+.stop i{width:16px;height:16px;background:var(--peach);border-radius:4px;display:inline-block}
+.clip{width:100%;background:var(--peach-soft);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.clip-title{font-family:var(--f-hand);font-weight:700;font-size:1.3rem}
+.clip audio{width:100%}
+.clip-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+
+/* 공책 */
+.prompt{margin:0 0 -10px;font-family:var(--f-hand);font-weight:700;font-size:1.6rem;color:var(--ink)}
+header h1,.sec-title,.day-meta b{letter-spacing:-.02em}
+.divider{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.95rem}
+.divider::before,.divider::after{content:"";flex:1;border-top:1px dashed var(--line)}
+textarea{width:100%;min-height:170px;resize:vertical;font-family:var(--f-hand);font-size:1.5rem;line-height:2.4rem;color:var(--ink);
+  border:0;border-radius:0;padding:2px 4px;background:transparent;
+  background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(2.4rem - 1px),var(--line) calc(2.4rem - 1px),var(--line) 2.4rem);
+  background-attachment:local}
+textarea::placeholder{color:var(--muted);font-family:var(--f-ui);font-size:1rem}
+textarea:focus{outline:none;background-color:var(--peach-soft)}
+
+/* 스티커 */
+.stickers{display:flex;flex-direction:column;gap:12px}
+.st-row{display:flex;flex-direction:column;gap:4px}
+.st-row .label{font-size:.9rem;color:var(--muted)}
+.chips{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.chip{font-family:var(--f-ui);font-size:.85rem;min-width:0;min-height:64px;white-space:nowrap;padding:4px 6px;border-radius:16px;border:1.5px solid transparent;background:transparent;color:var(--muted);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1.2}
+.chip .em{font-size:1.6rem;line-height:1.2;filter:grayscale(.55);opacity:.75}
+.chip[aria-pressed="true"]{background:var(--peach-soft);border-color:var(--peach);color:var(--ink);font-weight:700}
+.chip[aria-pressed="true"] .em{filter:none;opacity:1;transform:rotate(-6deg) scale(1.08)}
+
+.btn{font-family:var(--f-hand);font-weight:700;font-size:1.6rem;min-height:60px;padding:6px 22px;border-radius:16px;border:0;background:var(--ink);color:var(--page);cursor:pointer;flex:1 1 auto}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);font-family:var(--f-ui);font-weight:400;font-size:1rem;flex:0 0 auto}
+.btn:disabled{opacity:.55;cursor:default}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.small{font-family:var(--f-ui);font-size:1rem;min-height:44px;padding:6px 16px;border-radius:999px;border:1px solid var(--line);background:var(--page);color:var(--ink);cursor:pointer}
+button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid var(--peach);outline-offset:2px}
+.toast{font-family:var(--f-hand);font-weight:700;font-size:1.35rem;min-height:1.6em;text-align:center}
+.toast.ok{color:var(--leaf)} .toast.err{color:var(--danger)}
+
+/* 지난 일기 */
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.sec-title{font-family:var(--f-hand);font-weight:700;font-size:1.7rem;margin:0}
+.link{font-family:var(--f-ui);font-size:.95rem;background:none;border:0;color:var(--muted);cursor:pointer;padding:6px 4px;min-height:40px;text-decoration:underline;text-underline-offset:3px}
+.link.danger{color:var(--danger)}
+.notice{color:var(--muted);font-size:1rem;text-align:center;padding:26px 8px;font-family:var(--f-hand);font-size:1.3rem}
+.month{font-family:var(--f-hand);font-weight:700;font-size:1.35rem;color:var(--muted);display:flex;align-items:center;gap:10px;margin-top:4px}
+.month::after{content:"";flex:1;border-top:1px dashed var(--line)}
+.feed{display:flex;flex-direction:column;gap:22px;margin-top:12px}
+.entry{position:relative;background:var(--page);border-radius:6px 6px 16px 16px;padding:22px 20px 16px;min-width:0;
+  box-shadow:0 8px 20px -14px rgba(91,69,52,.35);display:flex;flex-direction:column;gap:10px}
+.entry::before{content:"";position:absolute;top:-9px;left:22px;width:70px;height:18px;background:var(--butter);opacity:.8;transform:rotate(-3deg);border-radius:2px}
+.entry:nth-child(even)::before{left:auto;right:22px;transform:rotate(3deg);background:var(--peach-soft)}
+.ehead{display:flex;align-items:center;gap:12px}
+.e-day{font-family:var(--f-hand);font-weight:700;font-size:2.6rem;line-height:.9;color:var(--peach);min-width:1.4em;text-align:center}
+.e-date{display:flex;flex-direction:column;line-height:1.2}
+.e-date b{font-family:var(--f-hand);font-size:1.25rem}
+.e-date span{font-size:.85rem;color:var(--muted)}
+.e-st{margin-left:auto;display:flex;gap:2px;font-size:1.6rem}
+.e-st span{display:inline-block;transform:rotate(-8deg)}
+.e-st span+span{transform:rotate(6deg)}
+.ebody{font-family:var(--f-hand);font-size:1.45rem;line-height:2.2rem;white-space:pre-wrap;overflow-wrap:anywhere;
+  background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(2.2rem - 1px),var(--line) calc(2.2rem - 1px),var(--line) 2.2rem)}
+.play{align-self:flex-start;font-family:var(--f-hand);font-weight:700;font-size:1.3rem;min-height:50px;padding:4px 20px 4px 8px;border-radius:999px;border:0;background:var(--peach-soft);color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:10px}
+.play .pbtn{width:36px;height:36px;border-radius:50%;background:var(--peach);color:#fff;display:grid;place-items:center}
+.play svg{width:16px;height:16px;margin-left:2px}
+.entry audio{width:100%}
+.emeta{font-size:.82rem;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+
+/* 가족 비밀번호 */
+.pin{text-align:center;align-items:stretch}
+.pin .sec-title{font-size:1.8rem}
+.pin-hint{margin:-14px 0 0;color:var(--muted);font-size:.95rem}
+.pin input{font-family:var(--f-hand);font-size:2.4rem;letter-spacing:.5em;text-align:center;padding:8px;border:0;border-bottom:2px dashed var(--line);background:transparent;color:var(--ink);width:100%;font-variant-numeric:tabular-nums}
+.pin input:focus{outline:none;border-bottom-color:var(--peach)}
+</style>
+</head>
+<body>
+<div class="wrap" id="app" data-mode="<?= mode ?>">
+  <header>
+    <div class="cover-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7.5-4.6-9.6-9.2C1 8.6 3 5 6.6 5c2.1 0 3.6 1.2 5.4 3.2C13.8 6.2 15.3 5 17.4 5 21 5 23 8.6 21.6 11.8 19.5 16.4 12 21 12 21z"/></svg>
+    </div>
+    <div>
+      <h1>엄마의 일기장</h1>
+      <p id="subtitle"></p>
+    </div>
+  </header>
+
+  <!-- 엄마: 쓰기 -->
+  <section class="page" id="composer" hidden aria-label="일기 남기기">
+    <div class="dateline">
+      <span class="day-num" id="dayNum">8</span>
+      <span class="day-meta"><b id="dayMeta">11월 일요일</b><span id="dayToday">오늘</span></span>
+      <label class="date-change">날짜 바꾸기<input type="date" id="dateInput" aria-label="날짜 바꾸기"></label>
+    </div>
+
+    <p class="prompt">오늘 하루는 어땠어요?</p>
+    <textarea id="bodyInput" placeholder="생각나는 대로 편하게 적어 주세요. 키보드의 마이크를 눌러 말해도 글로 적혀요."></textarea>
+
+    <div class="stickers">
+      <div class="st-row"><span class="label">날씨</span><div class="chips" id="weatherChips"></div></div>
+      <div class="st-row"><span class="label">기분</span><div class="chips" id="moodChips"></div></div>
+    </div>
+
+    <div class="divider">적기 힘든 날엔, 목소리로 들려주세요</div>
+    <div class="voice">
+      <div id="micArea">
+        <button class="mic-big" id="micBtn" type="button" aria-label="말로 남기기">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3" fill="currentColor"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5"/></svg>
+          <span>말로 남기기</span>
+        </button>
+        <p class="voice-hint">엄마 목소리 그대로 동탁이, 동학이에게 전해져요</p>
+      </div>
+      <div class="rec-panel" id="recPanel" hidden>
+        <div class="rec-ring"><div><div class="rec-time" id="recTime">0:00</div><div class="rec-label">듣고 있어요</div></div></div>
+        <button class="stop" id="stopBtn" type="button"><i></i>다 했어요</button>
+      </div>
+      <div class="clip" id="clipPanel" hidden>
+        <div class="clip-title" id="clipTitle">목소리가 담겼어요</div>
+        <audio id="clipAudio" controls preload="metadata"></audio>
+        <div class="clip-actions">
+          <button class="small" id="reRecBtn" type="button">다시 녹음</button>
+          <button class="small" id="dropClipBtn" type="button">목소리 지우기</button>
+        </div>
+      </div>
+      <input type="file" id="audioFile" accept="audio/*" capture hidden>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="saveBtn" type="button">일기 저장하기</button>
+      <button class="btn ghost" id="cancelBtn" type="button" hidden>고치기 취소</button>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </section>
+
+  <!-- 가족: 비밀번호 -->
+  <section class="page pin" id="pinBox" hidden aria-label="가족 비밀번호">
+    <p class="sec-title">엄마의 하루, 펼쳐 볼까요?</p>
+    <p class="pin-hint">가족 비밀번호를 넣어 주세요</p>
+    <input id="pinInput" type="password" inputmode="numeric" maxlength="8" autocomplete="off" aria-label="비밀번호">
+    <button class="btn" id="pinBtn" type="button">엄마 일기 펼치기</button>
+    <div class="toast" id="pinToast" role="status" aria-live="polite"></div>
+  </section>
+
+  <section id="listSec" hidden aria-label="일기 목록">
+    <div class="sec-head"><p class="sec-title" id="listTitle">지난 일기</p><button class="link" id="refreshBtn" type="button">새로고침</button></div>
+    <div class="notice" id="feedNotice">엄마의 하루를 펼치는 중이에요…</div>
+    <div class="feed" id="feed"></div>
+  </section>
+</div>
+
+<script>
+var MODE = document.getElementById('app').getAttribute('data-mode') === 'family' ? 'family' : 'mom';
+var WEATHER = ['맑음','구름','비','눈','바람'];
+var MOOD = ['좋음','그럭저럭','피곤','속상','감사'];
+var EMOJI = {'맑음':'☀️','구름':'⛅','비':'🌧️','눈':'⛄','바람':'🍃','좋음':'😊','그럭저럭':'🙂','피곤':'😪','속상':'😢','감사':'🥰'};
+var DAYS = ['일','월','화','수','목','금','토'];
+var MAX_REC_SEC = 600;
+var $ = function(id){ return document.getElementById(id); };
+var sel = { weather:null, mood:null }, editingId = null, confirmId = null, entries = [], pin = '';
+var clip = null, keptAudio = false, removeAudio = false;
+var rec = null, recChunks = [], recTimer = null, recStart = 0;
+var audioCache = {};
+
+function pad(n){ return (n<10?'0':'')+n; }
+function todayStr(){ var d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function parts(s){ var p=s.split('-').map(Number); return {y:p[0],m:p[1],d:p[2],w:DAYS[new Date(p[0],p[1]-1,p[2]).getDay()]}; }
+function mmss(sec){ sec=Math.max(0,Math.round(sec)); return Math.floor(sec/60)+':'+pad(sec%60); }
+function store(k,v){ try{ v===undefined?localStorage.removeItem(k):localStorage.setItem(k,v); }catch(e){} }
+function load(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function toast(id,msg,kind){ var t=$(id); t.textContent=msg; t.className='toast '+(kind||''); if(kind==='ok') setTimeout(function(){ if(t.textContent===msg) t.textContent=''; },3500); }
+
+/* ---------- 목소리 녹음 ---------- */
+function canRecordHere(){
+  var pp=document.permissionsPolicy||document.featurePolicy;
+  try{ if(pp&&pp.allowsFeature&&!pp.allowsFeature('microphone')) return false; }catch(e){}
+  return !!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia&&window.MediaRecorder);
+}
+function showVoice(state){ $('micArea').hidden=state!=='idle'; $('recPanel').hidden=state!=='rec'; $('clipPanel').hidden=state!=='clip'; }
+function startRecording(){
+  if(!canRecordHere()){ $('audioFile').click(); return; }
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+    recChunks=[];
+    var types=['audio/webm;codecs=opus','audio/mp4','audio/webm'], mime='';
+    for(var i=0;i<types.length;i++){ if(MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(types[i])){ mime=types[i]; break; } }
+    rec = mime? new MediaRecorder(stream,{mimeType:mime}) : new MediaRecorder(stream);
+    rec.ondataavailable=function(e){ if(e.data&&e.data.size) recChunks.push(e.data); };
+    rec.onstop=function(){
+      clearInterval(recTimer); stream.getTracks().forEach(function(t){ t.stop(); });
+      var type=(rec.mimeType||'audio/webm').split(';')[0];
+      setClip(new Blob(recChunks,{type:type}),type,'voice.'+(type.indexOf('mp4')>=0?'m4a':'webm'),(Date.now()-recStart)/1000);
+    };
+    rec.start(1000); recStart=Date.now(); $('recTime').textContent='0:00'; showVoice('rec');
+    recTimer=setInterval(function(){ var s=(Date.now()-recStart)/1000; $('recTime').textContent=mmss(s); if(s>=MAX_REC_SEC) stopRecording(); },500);
+  }).catch(function(){ $('audioFile').click(); });
+}
+function stopRecording(){ if(rec&&rec.state!=='inactive') rec.stop(); }
+function setClip(blob,mime,name,seconds){
+  if(!blob||!blob.size){ toast('toast','소리가 담기지 않았어요. 다시 눌러 주세요.','err'); showVoice('idle'); return; }
+  if(blob.size>25*1024*1024){ toast('toast','너무 길어요. 10분 안으로 다시 해 주세요.','err'); showVoice('idle'); return; }
+  clip={blob:blob,mime:mime||blob.type||'audio/mp4',name:name||'voice.m4a'}; removeAudio=false;
+  var a=$('clipAudio'); try{ if(a.src) URL.revokeObjectURL(a.src); }catch(e){}
+  a.src=URL.createObjectURL(blob); a.hidden=false;
+  $('clipTitle').textContent='목소리가 담겼어요'+(seconds?' ('+mmss(seconds)+')':'')+'. 들어 보고 저장해 주세요.';
+  showVoice('clip');
+}
+function dropClip(){
+  if(clip){ clip=null; } else if(keptAudio){ removeAudio=true; keptAudio=false; }
+  var a=$('clipAudio'); try{ if(a.src) URL.revokeObjectURL(a.src); }catch(e){} a.removeAttribute('src');
+  showVoice('idle');
+}
+function blobToBase64(blob){ return new Promise(function(res,rej){ var r=new FileReader(); r.onload=function(){ res(String(r.result).split(',')[1]||''); }; r.onerror=rej; r.readAsDataURL(blob); }); }
+
+/* ---------- 엄마: 쓰기 ---------- */
+function chips(boxId,list,key){
+  var box=$(boxId); box.innerHTML='';
+  list.forEach(function(v){
+    var b=document.createElement('button'); b.type='button'; b.className='chip';
+    var em=document.createElement('span'); em.className='em'; em.textContent=EMOJI[v]; em.setAttribute('aria-hidden','true');
+    b.appendChild(em); b.appendChild(document.createTextNode(v));
+    b.setAttribute('aria-pressed', String(sel[key]===v));
+    b.onclick=function(){ sel[key]= sel[key]===v?null:v; chips(boxId,list,key); saveDraft(); };
+    box.appendChild(b);
+  });
+}
+function refreshChips(){ chips('weatherChips',WEATHER,'weather'); chips('moodChips',MOOD,'mood'); }
+function setDateLabel(){
+  var v=$('dateInput').value||todayStr(), p=parts(v);
+  $('dayNum').textContent=p.d; $('dayMeta').textContent=p.m+'월 '+p.w+'요일';
+  $('dayToday').textContent= v===todayStr()?'오늘의 일기':p.y+'년, 지난 하루';
+}
+function saveDraft(){ if(editingId) return; store('draft', JSON.stringify({t:$('bodyInput').value,w:sel.weather,m:sel.mood})); }
+function loadDraft(){ try{ var d=JSON.parse(load('draft')||'null'); if(d){ $('bodyInput').value=d.t||''; sel.weather=d.w||null; sel.mood=d.m||null; } }catch(e){} }
+function resetComposer(){ editingId=null; keptAudio=false; removeAudio=false; clip=null; $('bodyInput').value=''; sel={weather:null,mood:null}; $('dateInput').value=todayStr();
+  $('saveBtn').textContent='일기 저장하기'; $('cancelBtn').hidden=true; dropClip(); clip=null; removeAudio=false; refreshChips(); setDateLabel(); }
+
+function save(){
+  var text=$('bodyInput').value.trim();
+  if(rec&&rec.state==='recording'){ toast('toast','먼저 "다 했어요"를 눌러 주세요.','err'); return; }
+  if(!text&&!clip&&!keptAudio){ toast('toast','말로 남기거나 글을 적어 주세요.','err'); return; }
+  var btn=$('saveBtn'); btn.disabled=true; btn.textContent= clip?'목소리 담는 중…':'저장하는 중…';
+  var payload={ id:editingId, date:$('dateInput').value||todayStr(), weather:sel.weather, mood:sel.mood, text:text, removeAudio:removeAudio };
+  var send=function(){
+    google.script.run
+      .withSuccessHandler(function(){
+        var wasEdit=!!editingId; store('draft'); resetComposer(); btn.disabled=false;
+        toast('toast', wasEdit?'고친 일기를 저장했어요.':'오늘 하루, 잘 담아 두었어요. 동탁이랑 동학이가 읽을 거예요.','ok'); loadList();
+      })
+      .withFailureHandler(function(){
+        btn.disabled=false; btn.textContent=editingId?'고친 일기 저장':'일기 저장하기';
+        toast('toast','저장이 안 됐어요. 인터넷을 확인하고 다시 눌러 주세요.','err');
+      })
+      .saveEntry(payload);
+  };
+  if(clip){
+    blobToBase64(clip.blob).then(function(b64){ payload.audio={data:b64,mime:clip.mime,name:clip.name}; send(); })
+      .catch(function(){ btn.disabled=false; btn.textContent='일기 저장하기'; toast('toast','목소리를 읽지 못했어요. 다시 녹음해 주세요.','err'); });
+  } else send();
+}
+function startEdit(e){
+  resetComposer();
+  editingId=e.id; $('bodyInput').value=e.text||''; sel={weather:e.weather||null,mood:e.mood||null};
+  $('dateInput').value=e.date; setDateLabel(); refreshChips();
+  keptAudio=!!e.hasAudio;
+  if(keptAudio){ $('clipTitle').textContent='저장된 목소리가 있어요. 다시 녹음하면 바뀌어요.'; $('clipAudio').hidden=true; showVoice('clip'); }
+  $('saveBtn').textContent='고친 일기 저장'; $('cancelBtn').hidden=false;
+  $('composer').scrollIntoView({behavior:'smooth'});
+}
+function removeEntry(id){
+  google.script.run
+    .withSuccessHandler(function(){ confirmId=null; toast('toast','일기를 지웠어요.','ok'); loadList(); })
+    .withFailureHandler(function(){ toast('toast','지우지 못했어요. 다시 해 주세요.','err'); })
+    .deleteEntry(id);
+}
+
+/* ---------- 목록 ---------- */
+function loadList(){
+  $('feedNotice').hidden=false; $('feedNotice').textContent='엄마의 하루를 펼치는 중이에요…';
+  var fail=function(){ $('feedNotice').textContent='일기를 불러오지 못했어요. 새로고침을 눌러 주세요.'; };
+  if(MODE==='mom'){
+    google.script.run.withSuccessHandler(function(list){ entries=list||[]; render(); }).withFailureHandler(fail).getRecent();
+  }else{
+    google.script.run.withSuccessHandler(function(res){
+      if(!res||!res.ok){ store('pin'); showPin('비밀번호가 바뀌었어요. 다시 넣어 주세요.'); return; }
+      entries=res.entries; render();
+    }).withFailureHandler(fail).getAllForFamily(pin);
+  }
+}
+function el(tag,cls,text){ var e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
+var PLAY_SVG='<span class="pbtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16l13-8z" fill="currentColor"/></svg></span>';
+function playButton(e){
+  var b=el('button','play'); b.type='button'; b.innerHTML=PLAY_SVG; b.appendChild(el('span',null,'엄마 목소리로 듣기'));
+  b.onclick=function(){
+    var show=function(url){ var a=document.createElement('audio'); a.controls=true; a.src=url; b.replaceWith(a); a.play().catch(function(){}); };
+    if(audioCache[e.id]){ show(audioCache[e.id]); return; }
+    b.disabled=true; b.lastChild.textContent='불러오는 중…';
+    google.script.run.withSuccessHandler(function(r){
+      var bin=atob(r.data), arr=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+      var url=URL.createObjectURL(new Blob([arr],{type:r.mime||'audio/mp4'})); audioCache[e.id]=url; show(url);
+    }).withFailureHandler(function(){ b.disabled=false; b.lastChild.textContent='다시 눌러 주세요'; }).getAudio(e.id, MODE==='family'?pin:'');
+  };
+  return b;
+}
+function render(){
+  var feed=$('feed'); feed.innerHTML='';
+  if(!entries.length){ $('feedNotice').hidden=false; $('feedNotice').textContent= MODE==='mom'?'첫 번째 하루를 기다리고 있어요.':'엄마의 첫 이야기를 기다리고 있어요.'; return; }
+  $('feedNotice').hidden=true;
+  var lastMonth='';
+  entries.forEach(function(e){
+    var p=parts(e.date);
+    if(MODE==='family'){ var mk=p.y+'년 '+p.m+'월'; if(mk!==lastMonth){ feed.appendChild(el('div','month',mk)); lastMonth=mk; } }
+    var card=el('article','entry');
+    var head=el('div','ehead');
+    head.appendChild(el('span','e-day',String(p.d)));
+    var dd=el('span','e-date'); dd.appendChild(el('b',null,p.m+'월 '+p.w+'요일')); dd.appendChild(el('span',null,[e.weather,e.mood].filter(Boolean).join(' · ')||' ')); head.appendChild(dd);
+    var st=el('span','e-st'); [e.weather,e.mood].filter(Boolean).forEach(function(t){ var s=el('span',null,EMOJI[t]||''); s.setAttribute('aria-hidden','true'); st.appendChild(s); }); head.appendChild(st);
+    card.appendChild(head);
+    if(e.hasAudio) card.appendChild(playButton(e));
+    if(e.text) card.appendChild(el('div','ebody',e.text));
+    var meta=el('div','emeta'); meta.appendChild(el('span',null, e.editedAt?'고침 '+e.editedAt.slice(5):'남긴 시각 '+e.createdAt.slice(5)));
+    if(MODE==='mom'){
+      var ed=el('button','link','고치기'); ed.type='button'; ed.onclick=function(){ startEdit(e); }; meta.appendChild(ed);
+      if(confirmId===e.id){
+        meta.appendChild(el('span',null,'정말 지울까요?'));
+        var y=el('button','link danger','네, 지우기'); y.type='button'; y.onclick=function(){ removeEntry(e.id); };
+        var n=el('button','link','아니요'); n.type='button'; n.onclick=function(){ confirmId=null; render(); };
+        meta.appendChild(y); meta.appendChild(n);
+      }else{
+        var d=el('button','link danger','지우기'); d.type='button'; d.onclick=function(){ confirmId=e.id; render(); }; meta.appendChild(d);
+      }
+    }
+    card.appendChild(meta); feed.appendChild(card);
+  });
+}
+
+/* ---------- 가족: 비밀번호 ---------- */
+function showPin(msg){ $('pinBox').hidden=false; $('listSec').hidden=true; if(msg) toast('pinToast',msg,'err'); $('pinInput').focus(); }
+function tryPin(){
+  var v=$('pinInput').value.trim(); if(!v) return;
+  var btn=$('pinBtn'); btn.disabled=true;
+  google.script.run.withSuccessHandler(function(res){
+    btn.disabled=false;
+    if(!res||!res.ok){ toast('pinToast','비밀번호가 맞지 않아요.','err'); return; }
+    pin=v; store('pin',v); $('pinBox').hidden=true; $('listSec').hidden=false; entries=res.entries; render();
+  }).withFailureHandler(function(){ btn.disabled=false; toast('pinToast','연결이 안 돼요. 다시 눌러 주세요.','err'); }).getAllForFamily(v);
+}
+
+/* ---------- 시작 ---------- */
+(function(){
+  $('refreshBtn').onclick=loadList;
+  if(MODE==='mom'){
+    $('subtitle').textContent='동탁이, 동학이에게 남기는 엄마의 하루';
+    $('composer').hidden=false; $('listSec').hidden=false; $('listTitle').textContent='엄마가 남긴 하루들';
+    $('dateInput').value=todayStr(); loadDraft(); refreshChips(); setDateLabel(); showVoice('idle');
+    $('dateInput').onchange=setDateLabel; $('bodyInput').oninput=saveDraft;
+    $('micBtn').onclick=startRecording; $('stopBtn').onclick=stopRecording;
+    $('reRecBtn').onclick=function(){ dropClip(); startRecording(); };
+    $('dropClipBtn').onclick=dropClip;
+    $('audioFile').onchange=function(){ var f=this.files&&this.files[0]; if(f) setClip(f,f.type,f.name,0); this.value=''; };
+    $('saveBtn').onclick=save; $('cancelBtn').onclick=function(){ resetComposer(); loadDraft(); refreshChips(); };
+    loadList();
+  }else{
+    $('subtitle').textContent='동탁 · 동학에게, 엄마가'; $('listTitle').textContent='엄마의 하루는 어땠을까요';
+    $('pinBtn').onclick=tryPin; $('pinInput').onkeydown=function(ev){ if(ev.key==='Enter') tryPin(); };
+    var saved=load('pin');
+    if(saved){ pin=saved; $('listSec').hidden=false; loadList(); } else showPin();
+  }
+})();
+</script>
+</body>
+</html>
