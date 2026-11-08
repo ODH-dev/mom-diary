@@ -54,7 +54,7 @@ header p{margin:0;color:var(--muted);font-size:.95rem}
 .day-meta{display:flex;flex-direction:column;line-height:1.25;padding-bottom:2px}
 .day-meta b{font-family:var(--f-hand);font-size:1.5rem}
 .day-meta span{color:var(--muted);font-size:.95rem}
-.date-change{margin-left:auto;position:relative;font-size:.9rem;color:var(--muted);border:1px dashed var(--line);border-radius:999px;padding:4px 12px;cursor:pointer}
+.date-change{margin-left:auto;position:relative;font-size:.9rem;color:var(--muted);border:1px dashed var(--line);border-radius:999px;padding:4px 12px;cursor:pointer;white-space:nowrap;flex:none}
 .date-change input{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}
 
 /* 말로 남기기 */
@@ -81,7 +81,7 @@ header p{margin:0;color:var(--muted);font-size:.95rem}
 .clip-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 
 /* 공책 */
-.prompt{margin:0 0 -10px;font-family:var(--f-hand);font-weight:700;font-size:1.6rem;color:var(--ink)}
+.prompt{margin:0 0 -8px;font-family:var(--f-hand);font-weight:700;font-size:1.6rem;color:var(--ink)}
 header h1,.sec-title,.day-meta b{letter-spacing:-.02em}
 .divider{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.95rem}
 .divider::before,.divider::after{content:"";flex:1;border-top:1px dashed var(--line)}
@@ -90,7 +90,15 @@ textarea{width:100%;min-height:170px;resize:vertical;font-family:var(--f-hand);f
   background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(2.4rem - 1px),var(--line) calc(2.4rem - 1px),var(--line) 2.4rem);
   background-attachment:local}
 textarea::placeholder{color:var(--muted);font-family:var(--f-ui);font-size:1rem}
-textarea:focus{outline:none;background-color:var(--peach-soft)}
+textarea:focus,textarea:focus-visible{outline:none;background-color:var(--peach-soft)}
+
+/* 말로/글로 고르기 */
+.mode{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;border-radius:18px;background:var(--paper)}
+.mode button{font-family:var(--f-hand);font-weight:700;font-size:clamp(1.05rem,4.6vw,1.3rem);white-space:nowrap;min-width:0;padding:0 6px;min-height:54px;border:0;border-radius:14px;background:transparent;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.mode button svg{width:20px;height:20px}
+.mode button[aria-selected="true"]{background:var(--page);color:var(--ink);box-shadow:0 2px 8px -3px rgba(91,69,52,.35)}
+.mode button[aria-selected="true"] svg{color:var(--peach)}
+#panelVoice{padding-top:4px}
 
 /* 스티커 */
 .stickers{display:flex;flex-direction:column;gap:12px}
@@ -170,14 +178,12 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
     </div>
 
     <p class="prompt">오늘 하루는 어땠어요?</p>
-    <textarea id="bodyInput" placeholder="생각나는 대로 편하게 적어 주세요. 키보드의 마이크를 눌러 말해도 글로 적혀요."></textarea>
-
-    <div class="stickers">
-      <div class="st-row"><span class="label">날씨</span><div class="chips" id="weatherChips"></div></div>
-      <div class="st-row"><span class="label">기분</span><div class="chips" id="moodChips"></div></div>
+    <div class="mode" role="tablist" aria-label="남기는 방법">
+      <button type="button" role="tab" id="tabVoice" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>말로 남기기</button>
+      <button type="button" role="tab" id="tabText" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg>글로 쓰기</button>
     </div>
 
-    <div class="divider">적기 힘든 날엔, 목소리로 들려주세요</div>
+    <div id="panelVoice" role="tabpanel">
     <div class="voice">
       <div id="micArea">
         <button class="mic-big" id="micBtn" type="button" aria-label="말로 남기기">
@@ -200,6 +206,16 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
         </div>
       </div>
       <input type="file" id="audioFile" accept="audio/*" hidden>
+    </div>
+    </div>
+
+    <div id="panelText" role="tabpanel" hidden>
+      <textarea id="bodyInput" aria-label="오늘의 일기" placeholder="생각나는 대로 편하게 적어 주세요. 키보드의 마이크를 눌러 말해도 글로 적혀요."></textarea>
+    </div>
+
+    <div class="stickers">
+      <div class="st-row"><span class="label">날씨</span><div class="chips" id="weatherChips"></div></div>
+      <div class="st-row"><span class="label">기분</span><div class="chips" id="moodChips"></div></div>
     </div>
 
     <div class="actions">
@@ -316,6 +332,12 @@ function chips(boxId,list,key){
     box.appendChild(b);
   });
 }
+function setMode(m){
+  var v=m!=='text';
+  $('tabVoice').setAttribute('aria-selected',String(v)); $('tabText').setAttribute('aria-selected',String(!v));
+  $('panelVoice').hidden=!v; $('panelText').hidden=v; store('mode',v?'voice':'text');
+  if(!v) setTimeout(function(){ $('bodyInput').focus(); },50);
+}
 function refreshChips(){ chips('weatherChips',WEATHER,'weather'); chips('moodChips',MOOD,'mood'); }
 function setDateLabel(){
   var v=$('dateInput').value||todayStr(), p=parts(v);
@@ -330,7 +352,7 @@ function resetComposer(){ editingId=null; keptAudio=false; removeAudio=false; cl
 function save(){
   var text=$('bodyInput').value.trim();
   if(rec&&rec.state==='recording'){ toast('toast','먼저 "다 했어요"를 눌러 주세요.','err'); return; }
-  if(!text&&!clip&&!keptAudio){ toast('toast','말로 남기거나 글을 적어 주세요.','err'); return; }
+  if(!text&&!clip&&!keptAudio){ toast('toast', $('panelVoice').hidden?'일기 내용을 적어 주세요.':'먼저 동그란 버튼을 눌러 목소리를 남겨 주세요.','err'); return; }
   var btn=$('saveBtn'); btn.disabled=true; btn.textContent= clip?'목소리 담는 중…':'저장하는 중…';
   var payload={ id:editingId, date:$('dateInput').value||todayStr(), weather:sel.weather, mood:sel.mood, text:text, removeAudio:removeAudio };
   var send=function(){
@@ -357,6 +379,7 @@ function startEdit(e){
   keptAudio=!!e.hasAudio;
   if(keptAudio){ $('clipTitle').textContent='저장된 목소리가 있어요. 다시 녹음하면 바뀌어요.'; $('clipAudio').hidden=true; showVoice('clip'); }
   $('saveBtn').textContent='고친 일기 저장'; $('cancelBtn').hidden=false;
+  setMode(e.text&&!e.hasAudio?'text':'voice');
   $('composer').scrollIntoView({behavior:'smooth'});
 }
 function removeEntry(id){
@@ -447,6 +470,9 @@ function tryPin(){
     $('composer').hidden=false; $('listSec').hidden=false; $('listTitle').textContent='엄마가 남긴 하루들';
     $('dateInput').value=todayStr(); loadDraft(); refreshChips(); setDateLabel(); showVoice('idle');
     $('dateInput').onchange=setDateLabel; $('bodyInput').oninput=saveDraft;
+    $('tabVoice').onclick=function(){ setMode('voice'); }; $('tabText').onclick=function(){ setMode('text'); };
+    var d0=null; try{ d0=JSON.parse(load('draft')||'null'); }catch(e){}
+    setMode(d0&&d0.t ? 'text' : (load('mode')||'voice'));
     $('micBtn').onclick=startRecording; $('stopBtn').onclick=stopRecording;
     $('reRecBtn').onclick=function(){ dropClip(); startRecording(); };
     $('dropClipBtn').onclick=dropClip;
