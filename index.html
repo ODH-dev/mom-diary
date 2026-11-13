@@ -7,6 +7,11 @@
 <meta name="color-scheme" content="light dark">
 <title>엄마의 일기장</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%2212%22 fill=%22%23FCE6DC%22/%3E%3Cpath fill=%22%23EE9A7E%22 d=%22M12 19s-6-3.7-7.7-7.4C3.2 9 4.8 6.2 7.6 6.2c1.7 0 2.9 1 4.4 2.6 1.5-1.6 2.7-2.6 4.4-2.6 2.8 0 4.4 2.8 3.3 5.4C18 15.3 12 19 12 19z%22/%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="엄마 일기장">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gowun+Dodum&display=swap">
 <style>
@@ -32,7 +37,8 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0}
-body{background:var(--paper);color:var(--ink);font-family:var(--f-ui);font-size:18px;line-height:1.6;-webkit-text-size-adjust:100%;word-break:keep-all;overflow-wrap:anywhere;
+html{font-size:calc(100% * var(--fs,1))}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-ui);font-size:1.125rem;line-height:1.6;-webkit-text-size-adjust:100%;word-break:keep-all;overflow-wrap:anywhere;
   background-image:radial-gradient(var(--line) 1px,transparent 1.2px);background-size:22px 22px}
 .wrap{max-width:560px;margin:0 auto;padding-block:22px 64px;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
@@ -212,6 +218,58 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
   .just-opened > section,.just-opened > .news{animation:rise .5s ease both}
   @keyframes rise{from{opacity:0;transform:translateY(12px)}}
 }
+
+/* ---- 업그레이드: 글씨 크기 · 카톡 알리기 · 질문 · 엄마 답장 · 사진 · 홈 화면 ---- */
+header{position:relative}
+header>div:nth-child(2){min-width:0}
+header h1{font-size:clamp(26px,8vw,37px)}
+.fs-btn{margin-left:auto;flex:none;align-self:flex-start;min-width:44px;min-height:44px;border-radius:999px;border:1px solid var(--line);background:var(--page);color:var(--ink);cursor:pointer;font-family:var(--f-ui);font-size:15px;padding:0 9px;white-space:nowrap}
+/* 큰 글씨에서도 날짜 숫자·요일이 쪼개지지 않게 */
+.day-num,.e-day,.day-meta b,.e-date b,.day-meta span{white-space:nowrap}
+.dateline{flex-wrap:wrap;row-gap:10px}
+.day-num{flex:none}
+.fs-btn b{font-size:1.2em;margin-left:1px}
+.sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:max(16px,env(safe-area-inset-bottom,0px));width:min(520px,calc(100% - 24px));z-index:50;background:var(--page);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 12px 32px -10px rgba(91,69,52,.45);display:flex;flex-direction:column;gap:10px}
+.sheet p{margin:0;font-family:var(--f-hand);font-weight:700;font-size:1.35rem;line-height:1.3}
+.sheet small{color:var(--muted);font-size:.85rem}
+.sheet .row{display:flex;gap:8px;flex-wrap:wrap}
+.sheet .kakao{flex:1 1 auto;min-height:54px;border:0;border-radius:14px;background:#FEE500;color:#191919;font-family:var(--f-hand);font-weight:700;font-size:1.4rem;cursor:pointer}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .3s ease}@keyframes up{from{opacity:0;transform:translate(-50%,16px)}}}
+.qbox{gap:14px}
+.qbox .sec-title{font-size:1.5rem}
+.qitem{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:14px;background:var(--paper)}
+.qitem .q{font-family:var(--f-hand);font-size:1.4rem;line-height:1.35}
+.qitem .meta{font-size:.82rem;color:var(--muted)}
+.qitem .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.qstate{font-size:.85rem;color:var(--muted)}
+.qstate.done{color:var(--leaf);font-weight:700}
+.ask-form{display:flex;gap:8px}
+.ask-form input,.mom-reply input{flex:1;min-width:0;font:inherit;font-size:1rem;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--page);color:var(--ink);min-height:48px}
+.ask-form button,.mom-reply button.send{font-family:var(--f-hand);font-weight:700;font-size:1.2rem;border:0;border-radius:12px;background:var(--ink);color:var(--page);padding:0 16px;cursor:pointer;min-height:48px;white-space:nowrap}
+.ask-form button:disabled,.mom-reply button.send:disabled{opacity:.55}
+.quick{display:flex;gap:6px;flex-wrap:wrap}
+.quick button{font-family:var(--f-ui);font-size:.88rem;min-height:38px;padding:4px 12px;border-radius:999px;border:1px solid var(--line);background:var(--page);color:var(--ink);cursor:pointer}
+.answering{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:14px;background:var(--peach-soft);margin-top:-6px}
+.answering span{flex:1;font-size:.95rem;line-height:1.4}
+.answering b{font-family:var(--f-hand);font-size:1.3rem;display:block}
+.answering button{border:0;background:transparent;color:var(--muted);font-size:1.3rem;cursor:pointer;min-width:40px;min-height:40px}
+.qquote{font-size:.9rem;color:var(--ink);background:var(--paper);border-left:4px solid var(--peach);border-radius:4px 12px 12px 4px;padding:8px 12px;line-height:1.45}
+.qquote b{color:var(--peach)}
+.bubble.mom{align-self:flex-end;background:var(--peach-soft);border-radius:16px 4px 16px 16px}
+.bubble.mom .who{color:var(--danger)}
+.mom-reply{display:flex;flex-direction:column;gap:8px}
+.mom-reply .row{display:flex;gap:8px}
+.photo-pick{display:flex;flex-direction:column;gap:10px}
+.photo-pick .small{align-self:flex-start}
+.photo-prev{display:flex;gap:12px;align-items:center;padding:10px;border-radius:14px;background:var(--paper)}
+.photo-prev img{width:88px;height:88px;object-fit:cover;border-radius:10px;background:var(--line);flex:none}
+.photo-prev span{flex:1;font-size:.9rem;color:var(--muted)}
+.photo{border-radius:12px;overflow:hidden;background:var(--paper);min-height:120px;display:grid;place-items:center;color:var(--muted);font-size:.9rem}
+.photo img{display:block;width:100%;height:auto;max-height:70vh;object-fit:contain;background:var(--paper);cursor:zoom-in}
+.photo.big img{max-height:none;cursor:zoom-out}
+.install{display:flex;flex-direction:column;gap:10px;padding:14px 16px;border-radius:16px;background:var(--leaf-soft)}
+.install p{margin:0;font-size:1rem;line-height:1.5}
+.install .row{display:flex;gap:8px;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -224,9 +282,12 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
       <h1>엄마의 일기장</h1>
       <p id="subtitle"></p>
     </div>
+    <button type="button" class="fs-btn" id="fsBtn" aria-label="글씨 크기 바꾸기">가<b>가</b></button>
   </header>
 
   <div class="news" id="news" hidden role="status"></div>
+  <div class="install" id="installBox" hidden><p>홈 화면에 <b>엄마 일기장</b> 아이콘을 만들어 두면 앱처럼 바로 열 수 있어요.</p><div class="row"><button type="button" class="btn" id="installGo">홈 화면에 추가</button><button type="button" class="small" id="installNo">괜찮아요</button></div></div>
+  <section class="page qbox" id="qBox" hidden aria-label="질문"></section>
 
   <!-- 엄마: 쓰기 -->
   <section class="page" id="composer" hidden aria-label="일기 남기기">
@@ -236,7 +297,8 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
       <label class="date-change">날짜 바꾸기<input type="date" id="dateInput" aria-label="날짜 바꾸기"></label>
     </div>
 
-    <p class="prompt">오늘 하루는 어땠어요?</p>
+    <p class="prompt" id="prompt">오늘 하루는 어땠어요?</p>
+    <div class="answering" id="answering" hidden><span></span><button type="button" id="answerCancel" aria-label="질문에 답하기 그만두기">✕</button></div>
     <div class="mode" role="tablist" aria-label="남기는 방법">
       <button type="button" role="tab" id="tabVoice" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>말로 남기기</button>
       <button type="button" role="tab" id="tabText" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg>글로 쓰기</button>
@@ -270,6 +332,12 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
 
     <div id="panelText" role="tabpanel" hidden>
       <textarea id="bodyInput" aria-label="오늘의 일기" placeholder="생각나는 대로 편하게 적어 주세요. 키보드의 마이크를 눌러 말해도 글로 적혀요."></textarea>
+    </div>
+
+    <div class="photo-pick">
+      <button type="button" class="small" id="photoBtn">📷 사진 한 장 붙이기</button>
+      <div class="photo-prev" id="photoPrev" hidden><img id="photoImg" alt="붙인 사진"><span id="photoTxt">사진이 같이 저장돼요</span><button type="button" class="small" id="photoDrop">사진 빼기</button></div>
+      <input type="file" id="photoFile" accept="image/*" hidden>
     </div>
 
     <div class="stickers">
@@ -306,6 +374,8 @@ button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px soli
   </section>
 </div>
 
+<div class="sheet" id="sheet" hidden role="dialog" aria-label="카톡으로 알리기"><p id="sheetMsg"></p><small id="sheetSub">누르면 공유 창이 열려요. 카카오톡을 골라 보내면 돼요.</small><div class="row"><button type="button" class="kakao" id="sheetGo">카톡으로 알리기</button><button type="button" class="small" id="sheetNo">괜찮아요</button></div></div>
+
 <script>
 var MODE = 'family';  /* 누구세요?에서 엄마를 고르면 'mom' */
 /* 저장은 구글 시트·드라이브(Apps Script)로 보냄 */
@@ -330,7 +400,12 @@ var $ = function(id){ return document.getElementById(id); };
 var sel = { weather:null, mood:null }, editingId = null, confirmId = null, entries = [], pin = '';
 var clip = null, keptAudio = false, removeAudio = false;
 var rec = null, recChunks = [], recTimer = null, recStart = 0;
-var audioCache = {};
+var audioCache = {}, photoCache = {};
+var SITE = location.origin + location.pathname;
+var questions = [], answering = null;
+var photo = null, keptPhoto = false, removePhoto = false;
+var ASK_IDEAS = ['요즘 뭐 드세요?','오늘 제일 좋았던 일은?','요즘 무슨 생각 하세요?','제가 어릴 때 어땠어요?'];
+var MOM_QUICK = ['고마워 ❤️','사랑해 우리 아들','밥 잘 챙겨 먹어','시간 될 때 전화 한번 해'];
 
 function pad(n){ return (n<10?'0':'')+n; }
 function todayStr(){ var d=new Date(); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
@@ -431,20 +506,27 @@ function setDateLabel(){
 }
 function saveDraft(){ if(editingId) return; store('draft', JSON.stringify({t:$('bodyInput').value,w:sel.weather,m:sel.mood})); }
 function loadDraft(){ try{ var d=JSON.parse(load('draft')||'null'); if(d){ $('bodyInput').value=d.t||''; sel.weather=d.w||null; sel.mood=d.m||null; } }catch(e){} }
-function resetComposer(){ editingId=null; keptAudio=false; removeAudio=false; clip=null; $('bodyInput').value=''; sel={weather:null,mood:null}; $('dateInput').value=todayStr();
+function resetComposer(){ setPhoto(null); keptPhoto=false; removePhoto=false; editingId=null; keptAudio=false; removeAudio=false; clip=null; $('bodyInput').value=''; sel={weather:null,mood:null}; $('dateInput').value=todayStr();
   $('saveBtn').textContent='일기 저장하기'; $('cancelBtn').hidden=true; dropClip(); clip=null; removeAudio=false; refreshChips(); setDateLabel(); }
 
 function save(){
   var text=$('bodyInput').value.trim();
   if(rec&&rec.state==='recording'){ toast('toast','먼저 "다 했어요"를 눌러 주세요.','err'); return; }
-  if(!text&&!clip&&!keptAudio){ toast('toast', $('panelVoice').hidden?'일기 내용을 적어 주세요.':'먼저 동그란 버튼을 눌러 목소리를 남겨 주세요.','err'); return; }
-  var btn=$('saveBtn'); btn.disabled=true; btn.textContent= clip?'목소리 담는 중…':'저장하는 중…';
-  var payload={ id:editingId, date:$('dateInput').value||todayStr(), weather:sel.weather, mood:sel.mood, text:text, removeAudio:removeAudio };
+  if(!text&&!clip&&!keptAudio&&!photo&&!keptPhoto){ toast('toast', $('panelVoice').hidden?'일기 내용을 적어 주세요.':'먼저 동그란 버튼을 눌러 목소리를 남겨 주세요.','err'); return; }
+  var btn=$('saveBtn'); btn.disabled=true; btn.textContent= clip?'목소리 담는 중…':photo?'사진 담는 중…':'저장하는 중…';
+  var payload={ id:editingId, date:$('dateInput').value||todayStr(), weather:sel.weather, mood:sel.mood, text:text, removeAudio:removeAudio, removePhoto:removePhoto };
+  if(photo) payload.photo={data:photo.data,mime:'image/jpeg'};
+  var ans=answering; if(ans) payload.answer=ans.id;
+  var hadVoice=!!(clip||keptAudio);
   var send=function(){
     google.script.run
       .withSuccessHandler(function(){
-        var wasEdit=!!editingId; store('draft'); resetComposer(); btn.disabled=false;
+        var wasEdit=!!editingId; store('draft'); resetComposer(); setAnswering(null); btn.disabled=false;
         toast('toast', wasEdit?'고친 일기를 저장했어요.':'오늘 하루, 잘 담아 두었어요. 동탁이랑 동학이가 읽을 거예요.','ok'); loadList();
+        if(!wasEdit){
+          var how=hadVoice?'목소리로 ':'';
+          nudge('아들들한테 알려 줄까요?', ans ? (ans.who+'이가 물어본 거에 엄마가 '+how+'답했어요 💌 "'+ans.text+'"') : ('엄마가 오늘 하루를 '+how+'남겼어요 💌 열어 보고 한마디 해 줘요'));
+        }
       })
       .withFailureHandler(function(){
         btn.disabled=false; btn.textContent=editingId?'고친 일기 저장':'일기 저장하기';
@@ -461,7 +543,8 @@ function startEdit(e){
   resetComposer();
   editingId=e.id; $('bodyInput').value=e.text||''; sel={weather:e.weather||null,mood:e.mood||null};
   $('dateInput').value=e.date; setDateLabel(); refreshChips();
-  keptAudio=!!e.hasAudio;
+  keptAudio=!!e.hasAudio; keptPhoto=!!e.hasPhoto;
+  if(keptPhoto){ $('photoPrev').hidden=false; $('photoTxt').textContent='저장된 사진이 있어요. 새로 붙이면 바뀌어요.'; $('photoImg').removeAttribute('src'); fetchPhoto(e.id,function(u){ $('photoImg').src=u; }); }
   if(keptAudio){ $('clipTitle').textContent='저장된 목소리가 있어요. 다시 녹음하면 바뀌어요.'; $('clipAudio').hidden=true; showVoice('clip'); }
   $('saveBtn').textContent='고친 일기 저장'; $('cancelBtn').hidden=false;
   setMode(e.text&&!e.hasAudio?'text':'voice');
@@ -481,12 +564,12 @@ function loadList(){
     if(String(err&&err.message).indexOf('권한')>=0){ logout(); toast('pinToast','비밀번호가 바뀌었어요. 다시 넣어 주세요.','err'); return; }
     $('feedNotice').textContent='일기를 불러오지 못했어요. 새로고침을 눌러 주세요.'; };
   if(MODE==='mom'){
-    google.script.run.withSuccessHandler(function(list){ entries=list||[]; render(); showNews(); }).withFailureHandler(fail).getRecent();
+    google.script.run.withSuccessHandler(function(list){ entries=list||[]; render(); showNews(); loadQuestions(); }).withFailureHandler(fail).getRecent();
   }else{
     google.script.run.withSuccessHandler(function(res){
       if(!res||!res.ok){ logout(); toast('pinToast','비밀번호가 바뀌었어요. 다시 넣어 주세요.','err'); return; }
       if(res.who&&res.who!==ME){ ME=res.who; store('who',ME); if(ME==='엄마'){ start(); return; } }
-      entries=res.entries; render(); markAllRead();
+      entries=res.entries; render(); markAllRead(); loadQuestions();
     }).withFailureHandler(fail).getAllForFamily(pin);
   }
 }
@@ -518,7 +601,9 @@ function render(){
     head.appendChild(el('span','e-day',String(p.d)));
     var dd=el('span','e-date'); dd.appendChild(el('b',null,p.m+'월 '+p.w+'요일')); dd.appendChild(el('span',null,[e.weather,e.mood].filter(Boolean).join(' · ')||' ')); head.appendChild(dd);
     var st=el('span','e-st'); [e.weather,e.mood].filter(Boolean).forEach(function(t){ var s=el('span',null,EMOJI[t]||''); s.setAttribute('aria-hidden','true'); st.appendChild(s); }); head.appendChild(st);
-    card.appendChild(head);
+    card.appendChild(head); card.id='e-'+e.id;
+    if(e.question){ var qq=el('div','qquote'); qq.appendChild(el('b',null,'💬 '+e.question.who+'이가 물었어요 ')); qq.appendChild(document.createTextNode(e.question.text)); card.appendChild(qq); }
+    if(e.hasPhoto){ var ph=el('div','photo','사진 불러오는 중…'); ph.setAttribute('data-pid',e.id); card.appendChild(ph); }
     if(e.hasAudio) card.appendChild(playButton(e));
     if(e.text) card.appendChild(el('div','ebody',e.text));
     card.appendChild(socialBlock(e));
@@ -536,6 +621,7 @@ function render(){
     }
     card.appendChild(meta); feed.appendChild(card);
   });
+  loadPhotos();
 }
 
 /* ---------- 아들들의 읽음 · 반응 · 답장 ---------- */
@@ -560,8 +646,11 @@ function socialBlock(e){
   if(tags.childNodes.length) box.appendChild(tags);
   if(e.replies.length){
     var bs=el('div','bubbles');
-    e.replies.forEach(function(r){ var b=el('div','bubble'); var w=el('span','who',r.who); w.appendChild(el('span','when',(r.time||'').slice(5))); b.appendChild(w); b.appendChild(document.createTextNode(r.text)); bs.appendChild(b); });
+    e.replies.forEach(function(r){ var b=el('div','bubble'+(r.who==='엄마'?' mom':'')); var w=el('span','who',r.who); w.appendChild(el('span','when',(r.time||'').slice(5))); b.appendChild(w); b.appendChild(document.createTextNode(r.text)); bs.appendChild(b); });
     box.appendChild(bs);
+  }
+  if(MODE==='mom' && (e.replies.some(function(r){ return r.who!=='엄마'; }) || Object.keys(e.reacts).length)){
+    box.appendChild(momReplyForm(e));
   }
   if(MODE==='family'){
     var f=el('form','reply-form'); var inp=document.createElement('input'); inp.id='reply-'+e.id; inp.maxLength=300; inp.placeholder='엄마에게 한마디 (짧아도 돼요)'; inp.setAttribute('aria-label','엄마에게 한마디');
@@ -575,14 +664,17 @@ function sendReact(e,emoji){
   var prev=e.reacts[ME]; var off=prev&&prev.emoji===emoji;
   if(off) delete e.reacts[ME]; else e.reacts[ME]={emoji:emoji,time:''};
   render();
-  google.script.run.withSuccessHandler(function(){}).withFailureHandler(function(){
+  var label=''; REACTS.forEach(function(r){ if(r[0]===emoji) label=r[1]; });
+  google.script.run.withSuccessHandler(function(){ if(!off) nudge('엄마한테도 알려 드릴까요?', ME+'이가 엄마 일기에 '+emoji+' '+label+' 를 보냈어요'); }).withFailureHandler(function(){
     if(prev) e.reacts[ME]=prev; else delete e.reacts[ME]; render(); alertBox('반응을 보내지 못했어요. 다시 눌러 주세요.');
   }).react(pin,ME,e.id,emoji);
 }
 function sendReply(e,inp,btn){
   var t=inp.value.trim(); if(!t) return;
   btn.disabled=true; btn.textContent='보내는 중';
-  google.script.run.withSuccessHandler(function(r){ e.replies.push(r); render(); })
+  google.script.run.withSuccessHandler(function(r){ e.replies.push(r); render();
+      if(ME==='엄마') nudge('아들들한테 알려 줄까요?', '엄마가 답장했어요 💌 "'+short(r.text)+'"');
+      else nudge('엄마한테도 알려 드릴까요?', ME+'이가 엄마 일기에 답장했어요 💌 "'+short(r.text)+'"'); })
     .withFailureHandler(function(){ btn.disabled=false; btn.textContent='보내기'; alertBox('답장을 보내지 못했어요. 다시 눌러 주세요.'); })
     .reply(pin,ME,e.id,t);
 }
@@ -596,7 +688,7 @@ function markAllRead(){
 function showNews(){
   var seen=load('seen')||'', ev=[];
   entries.forEach(function(e){
-    (e.replies||[]).forEach(function(r){ ev.push({t:r.time,s:r.who+'이가 답장을 남겼어요 💌 “'+(r.text.length>24?r.text.slice(0,24)+'…':r.text)+'”'}); });
+    (e.replies||[]).forEach(function(r){ if(r.who==='엄마') return; ev.push({t:r.time,s:r.who+'이가 답장을 남겼어요 💌 “'+(r.text.length>24?r.text.slice(0,24)+'…':r.text)+'”'}); });
     Object.keys(e.reacts||{}).forEach(function(n){ var r=e.reacts[n]; ev.push({t:r.time,s:n+'이가 '+r.emoji+' 를 보냈어요'}); });
     Object.keys(e.reads||{}).forEach(function(n){ ev.push({t:e.reads[n],s:n+'이가 일기를 읽었어요',low:1}); });
   });
@@ -608,8 +700,8 @@ function showNews(){
   n.hidden=false;
   store('seen', ev.reduce(function(m,x){ return x.t>m?x.t:m; },seen));
 }
-function hideAll(){ ['pinBox','composer','listSec','news'].forEach(function(id){ $(id).hidden=true; }); }
-function logout(){ store('pin'); store('who'); pin=''; ME=''; showPin(); }
+function hideAll(){ ['pinBox','composer','listSec','news','qBox','installBox'].forEach(function(id){ $(id).hidden=true; }); }
+function logout(){ $('sheet').hidden=true; setAnswering(null); questions=[]; store('pin'); store('who'); pin=''; ME=''; showPin(); }
 function start(){
   hideAll(); MODE= ME==='엄마'?'mom':'family'; confirmId=null;
   $('listSec').hidden=false; $('meBtn').textContent='나는 '+ME+' · 바꾸기'; $('meBtn').hidden=false;
@@ -619,7 +711,7 @@ function start(){
   }else{
     $('subtitle').textContent=ME+'이에게, 엄마가 보낸 편지'; $('listTitle').textContent='엄마가 보낸 편지';
   }
-  loadList();
+  loadList(); showInstall();
 }
 var momReady=false;
 function initMom(){
@@ -634,6 +726,156 @@ function initMom(){
   $('dropClipBtn').onclick=dropClip;
   $('audioFile').onchange=function(){ var f=this.files&&this.files[0]; if(f) setClip(f,f.type,f.name,0); this.value=''; };
   $('saveBtn').onclick=save; $('cancelBtn').onclick=function(){ resetComposer(); loadDraft(); refreshChips(); };
+  $('photoBtn').onclick=function(){ $('photoFile').click(); };
+  $('photoFile').onchange=function(){ var f=this.files&&this.files[0]; this.value=''; if(f) pickPhoto(f); };
+  $('photoDrop').onclick=function(){ if(photo){ setPhoto(null); } else if(keptPhoto){ removePhoto=true; keptPhoto=false; $('photoPrev').hidden=true; } };
+  $('answerCancel').onclick=function(){ setAnswering(null); };
+}
+
+/* ---------- 카톡으로 알리기 (폰의 공유 창) ---------- */
+function short(t){ t=String(t||''); return t.length>30?t.slice(0,30)+'…':t; }
+function nudge(title,text){
+  $('sheetMsg').textContent=title; $('sheetSub').textContent='누르면 공유 창이 열려요. 카카오톡을 골라 보내면 돼요.';
+  $('sheet').hidden=false;
+  $('sheetGo').onclick=function(){ shareText(text); };
+  $('sheetNo').onclick=function(){ $('sheet').hidden=true; };
+}
+function shareText(text){
+  var full=text+'\n'+SITE;
+  if(navigator.share){
+    navigator.share({title:'엄마의 일기장', text:text, url:SITE}).then(function(){ $('sheet').hidden=true; }).catch(function(err){ if(err&&err.name==='AbortError') return; copyText(full); });
+  } else copyText(full);
+}
+function copyText(full){
+  var done=function(){ $('sheetSub').textContent='알림 문장을 복사했어요. 카카오톡 대화방에 붙여 넣어 주세요.'; setTimeout(function(){ $('sheet').hidden=true; },3500); };
+  try{ navigator.clipboard.writeText(full).then(done,function(){ fallbackCopy(full); done(); }); }catch(e){ fallbackCopy(full); done(); }
+}
+function fallbackCopy(t){ var a=document.createElement('textarea'); a.value=t; a.style.position='fixed'; a.style.opacity='0'; document.body.appendChild(a); a.select(); try{ document.execCommand('copy'); }catch(e){} a.remove(); }
+
+/* ---------- 아들이 엄마한테 물어보기 ---------- */
+function loadQuestions(){
+  google.script.run.withSuccessHandler(function(list){ questions=list||[]; renderQ(); }).withFailureHandler(function(){}).getQuestions(pin);
+}
+function qWho(q){ return q.who+'이가 '+(q.time||'').slice(5).replace('-','/'); }
+function renderQ(){
+  var box=$('qBox'); box.innerHTML='';
+  if(MODE==='mom'){
+    var open=questions.filter(function(q){ return !q.answer&&!q.dismissed&&(!answering||answering.id!==q.id); }).slice(0,3);
+    if(!open.length){ box.hidden=true; return; }
+    box.appendChild(el('p','sec-title','아들이 물어봤어요 💬'));
+    open.forEach(function(q){
+      var it=el('div','qitem'); it.appendChild(el('span','meta',qWho(q)+' 물어봄')); it.appendChild(el('div','q',q.text));
+      var row=el('div','row');
+      var a=el('button','btn','일기로 답하기'); a.type='button'; a.onclick=function(){ setAnswering(q); };
+      var d=el('button','small','다음에'); d.type='button'; d.onclick=function(){ q.dismissed=true; renderQ(); google.script.run.withSuccessHandler(function(){}).withFailureHandler(function(){ q.dismissed=false; renderQ(); }).dismissQuestion(q.id); };
+      row.appendChild(a); row.appendChild(d); it.appendChild(row); box.appendChild(it);
+    });
+    box.hidden=false; return;
+  }
+  box.appendChild(el('p','sec-title','엄마한테 물어보기'));
+  box.appendChild(el('p','pin-hint','궁금한 걸 남기면 엄마 화면에 떠요. 엄마가 일기로 답해 줘요.'));
+  var f=el('form','ask-form'); var inp=document.createElement('input'); inp.maxLength=120; inp.placeholder='예) 요즘 뭐 드세요?'; inp.setAttribute('aria-label','엄마한테 물어볼 것');
+  var sb=el('button',null,'묻기'); sb.type='submit';
+  f.onsubmit=function(ev){ ev.preventDefault(); var t=inp.value.trim(); if(!t) return; sb.disabled=true; sb.textContent='보내는 중';
+    google.script.run.withSuccessHandler(function(q){ questions.unshift(q); renderQ(); nudge('엄마한테 알려 드릴까요?', ME+'이가 엄마한테 물어봤어요 💬 "'+short(q.text)+'" 일기로 답해 주세요'); })
+      .withFailureHandler(function(){ sb.disabled=false; sb.textContent='묻기'; alertBox('질문을 보내지 못했어요. 다시 눌러 주세요.'); }).ask(pin,ME,t); };
+  f.appendChild(inp); f.appendChild(sb); box.appendChild(f);
+  var ideas=el('div','quick'); ASK_IDEAS.forEach(function(t){ var b=el('button',null,t); b.type='button'; b.onclick=function(){ inp.value=t; inp.focus(); }; ideas.appendChild(b); }); box.appendChild(ideas);
+  questions.slice(0,4).forEach(function(q){
+    var it=el('div','qitem'); it.appendChild(el('span','meta',qWho(q)+' 물어봄')); it.appendChild(el('div','q',q.text));
+    if(q.answer){ var go=el('button','small qstate done','엄마가 답했어요 → 일기 보기'); go.type='button'; go.onclick=function(){ var c=$('e-'+q.answer); if(c) c.scrollIntoView({behavior:'smooth',block:'start'}); }; it.appendChild(go); }
+    else it.appendChild(el('span','qstate',q.dismissed?'엄마가 다음에 답한대요':'엄마의 답을 기다리는 중'));
+    box.appendChild(it);
+  });
+  box.hidden=false;
+}
+function setAnswering(q){
+  answering=q||null;
+  if(MODE!=='mom') return;
+  var a=$('answering');
+  if(q){ a.querySelector('span').innerHTML=''; a.querySelector('span').appendChild(el('b',null,q.who+'이가 물어봤어요')); a.querySelector('span').appendChild(document.createTextNode(q.text)); a.hidden=false; $('prompt').textContent='말로 답해 주세요';
+    $('composer').scrollIntoView({behavior:'smooth',block:'start'}); }
+  else { a.hidden=true; $('prompt').textContent='오늘 하루는 어땠어요?'; }
+  renderQ();
+}
+
+/* ---------- 엄마가 아들 답장에 다시 답하기 ---------- */
+function momReplyForm(e){
+  var w=el('div','mom-reply');
+  var quick=el('div','quick'); var row=el('form','row'); var inp=document.createElement('input'); inp.maxLength=300; inp.placeholder='아들들한테 한마디'; inp.setAttribute('aria-label','아들들한테 한마디');
+  MOM_QUICK.forEach(function(t){ var b=el('button',null,t); b.type='button'; b.onclick=function(){ inp.value=t; inp.focus(); }; quick.appendChild(b); });
+  var sb=el('button','send','보내기'); sb.type='submit';
+  row.onsubmit=function(ev){ ev.preventDefault(); sendReply(e,inp,sb); };
+  row.appendChild(inp); row.appendChild(sb); w.appendChild(quick); w.appendChild(row);
+  return w;
+}
+
+/* ---------- 사진 ---------- */
+function setPhoto(p){
+  photo=p; removePhoto=false;
+  if(p){ $('photoImg').src=p.url; $('photoTxt').textContent='사진이 같이 저장돼요'; $('photoPrev').hidden=false; }
+  else { $('photoPrev').hidden=true; $('photoImg').removeAttribute('src'); }
+}
+function pickPhoto(file){
+  var btn=$('photoBtn'); btn.disabled=true; btn.textContent='사진 준비하는 중…';
+  shrinkImage(file).then(function(p){ btn.disabled=false; btn.textContent='📷 다른 사진으로 바꾸기'; setPhoto(p); })
+    .catch(function(){ btn.disabled=false; btn.textContent='📷 사진 한 장 붙이기'; toast('toast','이 사진은 열 수 없어요. 다른 사진을 골라 주세요.','err'); });
+}
+/* 큰 사진은 긴 쪽 1600px로 줄여 JPEG로 (빨리 올라가고 시트·드라이브도 가볍게) */
+function shrinkImage(file){
+  return new Promise(function(res,rej){
+    var url=URL.createObjectURL(file), img=new Image();
+    img.onload=function(){
+      var max=1600, w=img.naturalWidth, h=img.naturalHeight, k=Math.min(1,max/Math.max(w,h));
+      var c=document.createElement('canvas'); c.width=Math.round(w*k); c.height=Math.round(h*k);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(url);
+      c.toBlob(function(b){ if(!b) return rej(); blobToBase64(b).then(function(d){ res({data:d,url:URL.createObjectURL(b)}); },rej); },'image/jpeg',0.85);
+    };
+    img.onerror=function(){ URL.revokeObjectURL(url); rej(); };
+    img.src=url;
+  });
+}
+var photoQueue=[], photoBusy=0;
+function fetchPhoto(id,cb){
+  if(photoCache[id]) return cb(photoCache[id]);
+  photoQueue.push([id,cb]); pumpPhotos();
+}
+function pumpPhotos(){
+  while(photoBusy<2&&photoQueue.length){
+    var job=photoQueue.shift(), id=job[0], cb=job[1];
+    if(photoCache[id]){ cb(photoCache[id]); continue; }
+    photoBusy++;
+    (function(id,cb){
+      google.script.run.withSuccessHandler(function(r){
+        photoBusy--; var bin=atob(r.data), arr=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+        photoCache[id]=URL.createObjectURL(new Blob([arr],{type:r.mime||'image/jpeg'})); cb(photoCache[id]); pumpPhotos();
+      }).withFailureHandler(function(){ photoBusy--; cb(null); pumpPhotos(); }).getPhoto(id,pin);
+    })(id,cb);
+  }
+}
+function loadPhotos(){
+  document.querySelectorAll('.photo[data-pid]').forEach(function(box){
+    var id=box.getAttribute('data-pid');
+    fetchPhoto(id,function(u){
+      if(!box.isConnected) return;
+      if(!u){ box.textContent='사진을 불러오지 못했어요. 새로고침해 주세요.'; return; }
+      box.textContent=''; var im=document.createElement('img'); im.alt='엄마가 붙인 사진'; im.src=u; im.onclick=function(){ box.classList.toggle('big'); }; box.appendChild(im);
+    });
+  });
+}
+
+/* ---------- 글씨 크기 ---------- */
+var FS=[1,1.15,1.3], FS_NAME=['보통','크게','아주 크게'];
+function applyFs(i){ i=(+i||0)%FS.length; document.documentElement.style.setProperty('--fs',FS[i]); $('fsBtn').setAttribute('aria-label','글씨 크기: '+FS_NAME[i]+' (누르면 바뀜)'); $('fsBtn').title='글씨 크기: '+FS_NAME[i]; return i; }
+var fsIdx=applyFs(load('fs')||0);
+
+/* ---------- 홈 화면에 추가 (안드로이드 크롬) ---------- */
+var installEvt=null;
+window.addEventListener('beforeinstallprompt',function(ev){ ev.preventDefault(); installEvt=ev; showInstall(); });
+window.addEventListener('appinstalled',function(){ installEvt=null; $('installBox').hidden=true; });
+function showInstall(){
+  var standalone=window.matchMedia&&matchMedia('(display-mode: standalone)').matches;
+  $('installBox').hidden=!(installEvt&&!standalone&&!load('instNo')&&!$('listSec').hidden);
 }
 
 /* ---------- 가족: 비밀번호 ---------- */
@@ -669,6 +911,9 @@ function tryPin(){
 (function(){
   $('refreshBtn').onclick=loadList;
   $('meBtn').onclick=logout;
+  $('fsBtn').onclick=function(){ fsIdx=applyFs(fsIdx+1); store('fs',String(fsIdx)); };
+  $('installGo').onclick=function(){ if(!installEvt) return; installEvt.prompt(); installEvt.userChoice.then(function(){ installEvt=null; $('installBox').hidden=true; }); };
+  $('installNo').onclick=function(){ store('instNo','1'); $('installBox').hidden=true; };
   $('pinBtn').onclick=tryPin; $('pinInput').onkeydown=function(ev){ if(ev.key==='Enter') tryPin(); };
   var saved=load('pin');
   if(saved&&ME){ pin=saved; showCover(); } else logout();
