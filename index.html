@@ -918,6 +918,11 @@ function tryPin(){
   var saved=load('pin');
   if(saved&&ME){ pin=saved; showCover(); } else logout();
 })();
+
+/* ---------- 앱처럼 쓰기: 서비스 워커 + 인터넷 끊김 안내 ---------- */
+if('serviceWorker' in navigator){ window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
+window.addEventListener('offline',function(){ alertBox('인터넷이 끊겼어요. 연결되면 다시 저장하거나 새로고침해 주세요.'); });
+window.addEventListener('online',function(){ var n=$('news'); if(n.textContent.indexOf('인터넷이 끊겼어요')===0) n.hidden=true; });
 </script>
 </body>
 </html>
